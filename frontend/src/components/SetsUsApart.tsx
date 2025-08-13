@@ -10,7 +10,7 @@ const SetsUsApart = () => {
   return (
     <section className="relative overflow-hidden md:mx-12 mx-4 min-h-[70vh] md:min-h-[90vh]">
       {/* Grid Background */}
-      <div className="absolute inset-0 opacity-40 dark:opacity-20">
+      <div className="absolute inset-0 opacity-40 dark:opacity-10">
         <div
           className="absolute inset-0 animate-float-grid"
           style={{

@@ -123,7 +123,7 @@ const Hero = () => {
         <img
           src="/grid.svg"
           alt="grid"
-          className="w-ful h-[50%] md:h-full object-cover md:object-center opacity-40 md:opacity-45 dark:opacity-20 dark:md:opacity-25 animate-float-grid"
+          className="w-ful h-[50%] md:h-full object-cover md:object-center opacity-40 md:opacity-45 dark:md:opacity-10 animate-float-grid"
         />
       </div>
 

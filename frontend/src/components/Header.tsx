@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import logo from "/yao_logo.svg";
 import yao_logo_white from "../../public/yao_logo_white.svg";
+import ConnectButton from "./ConnectButton";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -78,9 +79,7 @@ const Header = () => {
             <SunIcon className="w-4 md:w-5 h-4 md:h-5 text-gray-700 dark:text-gray-300" />
           )}
         </button>
-        <button className="h-10 md:h-12 w-24 md:w-40 text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer">
-          Connect wallet
-        </button>
+        <ConnectButton />
       </div>
     </header>
   );
