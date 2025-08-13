@@ -134,7 +134,7 @@ const Hero = () => {
         />
       </div>
 
-      <div className="relative z-10 md:mx-12 mx-4 px-4 md:px-6 py-8 md:py-16">
+      <div className="relative z-10 md:mx-12 bg-amber-300 md:mt-24 mx-4 px-4 md:px-6 py-8 md:py-16">
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center min-h-[400px] md:min-h-[600px]">
           {/* Left side - Logo and content */}
           <div className="space-y-6 md:space-y-8">

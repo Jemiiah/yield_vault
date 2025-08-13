@@ -11,7 +11,7 @@ const SetsUsApart = () => {
   return (
     <section className="relative overflow-hidden md:mx-12 mx-4 min-h-[70vh] md:min-h-[90vh]">
       {/* Grid Background */}
-      <div className="absolute inset-0 opacity-40">
+      <div className="absolute inset-0 opacity-40 dark:opacity-20">
         <div
           className="absolute inset-0 animate-float-grid"
           style={{
@@ -24,7 +24,7 @@ const SetsUsApart = () => {
         />
       </div>
 
-      <h2 className="text-[24px] md:text-[32px] relative z-10 px-4 md:px-6 font-bold text-[#1a2228] mb-6 md:mb-8 text-left">
+      <h2 className="text-[24px] md:text-[32px] relative z-10 px-4 md:px-6 font-bold text-[#1a2228] dark:text-white mb-6 md:mb-8 text-left">
         What Sets Us Apart
       </h2>
       <div className="relative z-10 max-w-3xl px-4 md:px-6">
@@ -72,19 +72,19 @@ const SetsUsApart = () => {
                 key={index}
                 className={` bg-transparent border-none translate-x-96 shadow-none max-wg transform transition-transform duration-300 hover:scale-105 ${feature.offset} p-0`}
               >
-                <CardContent className=" bg-none flex flex-col md:flex-row items-start space-y-4 md:space-x-4 p-0">
-                  <div className="w-16 h-16 md:w-24 md:h-24 bg-[#EBEBEBE5] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+                <CardContent className=" bg-none flex flex-col md:flex-row items-start md:space-x-4 p-0">
+                  <div className="w-16 h-16 md:w-24 md:h-24 bg-[#EBEBEBE5] dark:bg-[#161E24] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
                     <img
                       src={Icon}
                       alt={feature.title}
-                      className="w-4 h-4 md:w-6 md:h-6 text-[#565e64]"
+                      className="w-4 h-4 md:w-6 md:h-6 text-[#565e64] dark:text-gray-300"
                     />
                   </div>
-                  <div className="flex-1 bg-[#F6F5F2] rounded-lg p-3 md:p-4">
-                    <h3 className="text-lg md:text-xl font-semibold text-[#1A2228] mb-2 md:mb-3">
+                  <div className="flex-1 bg-[#F6F5F2] dark:bg-[#11191F] rounded-lg p-3 md:p-4">
+                    <h3 className="text-lg md:text-xl font-semibold text-[#1A2228] dark:text-white mb-2 md:mb-3">
                       {feature.title}
                     </h3>
-                    <p className="text-[#565e64] text-sm md:text-lg leading-relaxed">
+                    <p className="text-[#565e64] dark:text-[#95A0A6] text-sm md:text-base leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -96,7 +96,7 @@ const SetsUsApart = () => {
       </div>
       {/* Get Started Button */}
       <div className="relative z-10 px-4 md:px-6 text-center flex justify-end mt-6 md:mt-8">
-        <Button className="h-10 md:h-12 w-full md:w-[286px] text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] text-[#F8F7F4] flex items-center font-semibold justify-center transition-all duration-200 hover:scale-103 shadow-lg cursor-pointer">
+        <Button className="h-10 md:h-12 w-full md:w-[286px] text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-103 shadow-lg cursor-pointer">
           Get Started!
         </Button>
       </div>

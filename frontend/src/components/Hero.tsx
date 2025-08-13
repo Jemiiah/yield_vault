@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import yao_text from "../../public/yao_text_white.svg";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface DataPoint {
   id: number;
@@ -12,7 +14,7 @@ interface DataPoint {
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
-
+  const { theme } = useTheme();
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
     {
       id: 1,
@@ -121,13 +123,13 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [dataPoints]);
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden md:mt-28 mt-20">
       {/* Grid background - visible on all screen sizes */}
       <div className="absolute right-0 -top-24 w-full md:w-2/3 h-full overflow-hidden">
         <img
           src="/grid.svg"
           alt="grid"
-          className="w-ful h-[50%] md:h-full object-cover md:object-center opacity-40 md:opacity-45 animate-float-grid"
+          className="w-ful h-[50%] md:h-full object-cover md:object-center opacity-40 md:opacity-45 dark:opacity-20 dark:md:opacity-25 animate-float-grid"
         />
       </div>
 
@@ -138,53 +140,61 @@ const Hero = () => {
             <div className="space-y-4 md:space-y-6 mb-6 md:mb-10">
               <div className="flex flex-col text-center md:text-left md:flex-row items-center gap-4 md:gap-8">
                 <div>
-                  <img
-                    src="/YAO.svg"
-                    alt="YAO"
-                    // className="w-32 md:w-auto mb-2 md:mb-6"
-                  />
+                  {theme === "light" ? (
+                    <img
+                      src="/YAO.svg"
+                      alt="YAO"
+                      // className="w-32 md:w-auto mb-2 md:mb-6"
+                    />
+                  ) : (
+                    <img
+                      src={yao_text}
+                      alt="YAO"
+                      // className="w-32 md:w-auto mb-2 md:mb-6"
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-[#1A2228] text-sm md:text-base">
+                  <p className="text-[#1A2228] dark:text-white text-sm md:text-base">
                     Find the best opportunities.
                   </p>
-                  <p className="text-[#1A2228] text-sm md:text-base">
+                  <p className="text-[#1A2228] dark:text-white text-sm md:text-base">
                     Maximize your crypto earnings.
                   </p>
                 </div>
               </div>
 
-              <button className="h-12 md:h-14 w-full md:w-72 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] text-[#F8F7F4] flex items-center font-semibold justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer">
+              <button className="h-12 md:h-14 w-full md:w-72 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer">
                 Launch Dapp
               </button>
             </div>
 
             {/* Stats Section - Bottom cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-16">
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
-                <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
+                <p className="text-[#565E64] dark:text-[#95A0A6] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Total Value Locked (TVL)
                 </p>
-                <p className="text-[#1A2228] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
+                <p className="text-[#1A2228] dark:text-[#F5FBFF] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
                   $77.40k
                 </p>
               </div>
 
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
-                <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
+                <p className="text-[#565E64] dark:text-[#95A0A6] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Total Rewards Generated
                 </p>
-                <p className="text-[#1A2228] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
+                <p className="text-[#1A2228] dark:text-[#F5FBFF] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
                   $77.0k
                 </p>
               </div>
 
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
-                <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
+                <p className="text-[#565E64] dark:text-[#95A0A6] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Supported Pools
                 </p>
-                <p className="text-[#1A2228] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
+                <p className="text-[#1A2228] dark:text-[#F5FBFF] text-2xl md:text-4xl mt-1 md:mt-2 font-bold">
                   40+
                 </p>
               </div>
@@ -206,6 +216,7 @@ const Hero = () => {
                 stroke="#d9d9d9"
                 strokeWidth="2"
                 opacity="0.3"
+                className="dark:stroke-gray-600"
               />
 
               {/* Connection lines to active point */}
@@ -222,7 +233,9 @@ const Hero = () => {
                         : "rgba(26, 34, 40, 0.2)"
                     }
                     strokeWidth={point.active ? "2" : "1"}
-                    className={point.active ? "animate-pulse" : ""}
+                    className={`${
+                      point.active ? "animate-pulse" : ""
+                    } dark:stroke-white/60`}
                   />
 
                   {/* Data flow animation */}
