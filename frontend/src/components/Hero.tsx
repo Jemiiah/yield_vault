@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import grid_bg from "../../../public/grid.svg";
-import Yao_text from "../../../public/YAO.svg";
 
 interface DataPoint {
   id: number;
@@ -126,23 +123,23 @@ const Hero = () => {
   return (
     <section className="relative overflow-hidden">
       {/* Grid background - visible on all screen sizes */}
-      <div className="absolute right-0 top-0 w-full md:w-2/3 h-full overflow-hidden">
-        <Image
-          src={grid_bg}
+      <div className="absolute right-0 -top-24 w-full md:w-2/3 h-full overflow-hidden">
+        <img
+          src="/grid.svg"
           alt="grid"
-          className="w-full h-[50%] md:h-full object-cover opacity-40 md:opacity-45 animate-float-grid"
+          className="w-ful h-[50%] md:h-full object-cover md:object-center opacity-40 md:opacity-45 animate-float-grid"
         />
       </div>
 
       <div className="relative z-10 md:mx-12 mx-4 px-4 md:px-6 py-8 md:py-16">
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center min-h-[400px] md:min-h-[600px]">
           {/* Left side - Logo and content */}
-          <div className="space-y-6 md:space-y-8">
+          <div className="space-y-6 md:space-y-20 rounded-lg">
             <div className="space-y-4 md:space-y-6 mb-6 md:mb-10">
               <div className="flex flex-col text-center md:text-left md:flex-row items-center gap-4 md:gap-8">
                 <div>
-                  <Image
-                    src={Yao_text}
+                  <img
+                    src="/YAO.svg"
                     alt="YAO"
                     // className="w-32 md:w-auto mb-2 md:mb-6"
                   />
@@ -158,14 +155,14 @@ const Hero = () => {
                 </div>
               </div>
 
-              <button className="h-12 md:h-14 w-full md:w-64 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] text-[#F8F7F4] flex items-center font-semibold justify-center transition-all duration-200 hover:scale-103 shadow-lg cursor-pointer">
+              <button className="h-12 md:h-14 w-full md:w-72 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] text-[#F8F7F4] flex items-center font-semibold justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer">
                 Launch Dapp
               </button>
             </div>
 
             {/* Stats Section - Bottom cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-10">
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer p-3 md:p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6 md:mt-16">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
                 <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Total Value Locked (TVL)
                 </p>
@@ -174,7 +171,7 @@ const Hero = () => {
                 </p>
               </div>
 
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer p-3 md:p-4">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
                 <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Total Rewards Generated
                 </p>
@@ -183,7 +180,7 @@ const Hero = () => {
                 </p>
               </div>
 
-              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer p-3 md:p-4">
+              <div className="text-sm md:text-base rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] flex flex-col items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg p-3 md:p-4">
                 <p className="text-[#565E64] text-xs md:text-sm mb-1 md:mb-2 text-center">
                   Supported Pools
                 </p>
