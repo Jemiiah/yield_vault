@@ -25,6 +25,15 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
           new BrowserWalletStrategy(),
           new WebWalletStrategy(),
         ],
+        // appInfo: {
+        //   name: "Yao",
+        //   logo: "https://arweave.net/tQUcL4wlNj_NED2VjUGUhfCTJ6pDN9P0e3CbnHo3vUE",
+        // },
+        // gatewayConfig: {
+        //   host: "arweave.net",
+        //   port: 443,
+        //   protocol: "https",
+        // },
       }}
     >
       {children}
