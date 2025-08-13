@@ -1,11 +1,9 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import SetsUsApart from "@/components/SetsUsApart";
 import WtfIsYaoSection from "@/components/WtfIsYaoSection";
-import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function App() {
   return (

@@ -1,9 +1,8 @@
-import React from "react";
 import twitterIcon from "/new-twitter.svg";
 import telegramIcon from "/telegram.svg";
 import logo from "/yao_logo.svg";
 import logo_white from "/yao_logo_white.svg";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 
 const Footer = () => {
   const { theme } = useTheme();

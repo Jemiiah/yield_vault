@@ -1,6 +1,6 @@
 import { ChevronDown, MoonIcon, SunIcon } from "lucide-react";
-import React, { useState, useEffect } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useState, useEffect } from "react";
+import { useTheme } from "@/hooks/useTheme";
 import logo from "/yao_logo.svg";
 import yao_logo_white from "../../public/yao_logo_white.svg";
 

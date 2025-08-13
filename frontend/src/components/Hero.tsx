@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import yao_text from "../../public/yao_text_white.svg";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 
 interface DataPoint {
   id: number;
@@ -13,7 +13,6 @@ interface DataPoint {
 }
 
 const Hero = () => {
-  const [isVisible, setIsVisible] = useState(false);
   const { theme } = useTheme();
   const [dataPoints, setDataPoints] = useState<DataPoint[]>([
     {
@@ -84,11 +83,6 @@ const Hero = () => {
   const [botPosition, setBotPosition] = useState({ x: 50, y: 200 });
   const [activePoint, setActivePoint] = useState<number | null>(null);
   const [totalValue, setTotalValue] = useState(920);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {

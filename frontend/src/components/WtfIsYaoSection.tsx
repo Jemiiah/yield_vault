@@ -1,4 +1,4 @@
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 import logo_white from "../../public/yao_logo_white.svg";
 import logo from "../../public/yao_logo.svg";
 
