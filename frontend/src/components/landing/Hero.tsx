@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import yao_text from "../../public/yao_text_white.svg";
+import yao_text from "../../../public/yao_text_white.svg";
 import { useTheme } from "@/hooks/useTheme";
+import { Link } from "react-router-dom";
 
 interface DataPoint {
   id: number;
@@ -117,7 +118,7 @@ const Hero = () => {
     return () => clearInterval(interval);
   }, [dataPoints]);
   return (
-    <section className="relative overflow-hidden md:mt-28 mt-20">
+    <section className="relative overflow-hidden md:mt-8 mt-5">
       {/* Grid background - visible on all screen sizes */}
       <div className="absolute right-0 -top-24 w-full md:w-2/3 h-full overflow-hidden">
         <img
@@ -159,9 +160,12 @@ const Hero = () => {
                 </div>
               </div>
 
-              <button className="h-12 md:h-14 w-full md:w-72 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer">
+              <Link
+                to="/dashboard"
+                className="h-12 md:h-14 w-full md:w-72 text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-105 shadow-lg cursor-pointer"
+              >
                 Launch Dapp
-              </button>
+              </Link>
             </div>
 
             {/* Stats Section - Bottom cards */}
@@ -268,7 +272,7 @@ const Hero = () => {
                     cy={point.y}
                     r="8"
                     fill="white"
-                    stroke="#d9d9d9"
+                    stroke="#d989d9"
                     strokeWidth="1"
                   />
 
@@ -335,7 +339,7 @@ const Hero = () => {
                   y={botPosition.y - 25}
                   textAnchor="middle"
                   fontSize="14"
-                  fill="#1a2228"
+                  fill={theme === "light" ? "#1a2228" : "#F5FBFF"}
                   className="font-mono font-semibold"
                 >
                   YAO AI

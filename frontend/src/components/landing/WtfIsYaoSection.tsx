@@ -1,6 +1,6 @@
 import { useTheme } from "@/hooks/useTheme";
-import logo_white from "../../public/yao_logo_white.svg";
-import logo from "../../public/yao_logo.svg";
+import logo_white from "../../../public/yao_logo_white.svg";
+import logo from "../../../public/yao_logo.svg";
 
 const WtfIsYaoSection = () => {
   const { theme } = useTheme();

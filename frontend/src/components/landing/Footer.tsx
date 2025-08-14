@@ -1,7 +1,7 @@
 import twitterIcon from "/new-twitter.svg";
 import telegramIcon from "/telegram.svg";
-import logo from "/yao_logo.svg";
-import logo_white from "/yao_logo_white.svg";
+import logo from "../../../public/yao_logo.svg";
+import logo_white from "../../../public/yao_logo_white.svg";
 import { useTheme } from "@/hooks/useTheme";
 
 const Footer = () => {

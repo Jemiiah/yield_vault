@@ -1,9 +1,9 @@
 import { ChevronDown, MoonIcon, SunIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
-import logo from "/yao_logo.svg";
-import yao_logo_white from "../../public/yao_logo_white.svg";
-import ConnectButton from "./ConnectButton";
+import logo from "../../../public/yao_logo.svg";
+import yao_logo_white from "../../../public/yao_logo_white.svg";
+import ConnectButton from "../ConnectButton";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);

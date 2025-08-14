@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import aiIcon from "/ai-search.svg";
-import coinIcon from "/coins-dollar.svg";
-import multichainIcon from "/multichain.svg";
-import reloadIcon from "/reload.svg";
-import securityIcon from "/security-check.svg";
+import aiIcon from "../../../public/ai-search.svg";
+import coinIcon from "../../../public/coins-dollar.svg";
+import multichainIcon from "../../../public/multichain.svg";
+import reloadIcon from "../../../public/reload.svg";
+import securityIcon from "../../../public/security-check.svg";
+import { Link } from "react-router-dom";
 
 const SetsUsApart = () => {
   return (
@@ -93,10 +94,14 @@ const SetsUsApart = () => {
           })}
         </div>
       </div>
+
       {/* Get Started Button */}
       <div className="relative z-10 px-4 md:px-6 text-center flex justify-end mt-6 md:mt-8">
-        <Button className="h-10 md:h-12 w-full md:w-[286px] text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-103 shadow-lg cursor-pointer">
-          Get Started!
+        <Button
+          asChild
+          className="h-10 md:h-12 w-full md:w-[286px] text-sm md:text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md dark:backdrop-blur-lg text-white flex items-center font-semibold justify-center transition-all duration-200 hover:scale-103 shadow-lg cursor-pointer"
+        >
+          <Link to="/dashboard">Get Started!</Link>
         </Button>
       </div>
     </section>
