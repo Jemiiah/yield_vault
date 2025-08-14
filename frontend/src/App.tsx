@@ -4,6 +4,7 @@ import HomePage from "@/components/landing/HomePage";
 import Header from "@/components/landing/Header";
 import Footer from "@/components/landing/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import Strategy from "./components/Strategy";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/strategy/:id" element={<Strategy />} />
             </Routes>
           </main>
 
