@@ -17,9 +17,19 @@ end
 
 -- Load modules
 local json = require('json')
+local YieldMonitor = require('modules.yield-monitor')
+
 
 local function log(message)
     print("[VAULT] " .. tostring(message))
+end
+
+local function validateAddress(address)
+    return address and type(address) == "string" and #address > 0
+end
+
+local function getCurrentTimestamp()
+    return os.time()
 end
 
 -- Deposit handler
@@ -181,6 +191,165 @@ local function infoHandler(msg)
     log("Info response sent to: " .. msg.From)
 end
 
+-- Yield scanning handler
+local function scanYieldsHandler(msg)
+    log("Processing yield scan request from: " .. msg.From)
+    
+    -- Initialize yield monitor if needed
+    YieldMonitor.init()
+    
+    local result = YieldMonitor.scanYields()
+    
+    ao.send({
+        Target = msg.From,
+        Action = "Scan-Yields-Response",
+        Success = tostring(result.success),
+        Errors = tostring(result.errors),
+        Timestamp = tostring(result.timestamp),
+        Data = json.encode(result)
+    })
+    
+    log("Yield scan completed: " .. result.success .. " successful, " .. result.errors .. " errors")
+end
+
+-- Pool data update handler
+local function updatePoolDataHandler(msg)
+    log("Processing pool data update from: " .. msg.From)
+    
+    local poolId = msg.Tags.PoolId
+    if not poolId then
+        ao.send({
+            Target = msg.From,
+            Action = "Update-Pool-Error",
+            Error = "Missing PoolId"
+        })
+        return
+    end
+    
+    -- Initialize yield monitor if needed
+    YieldMonitor.init()
+    
+    -- Extract pool data from message tags
+    local poolData = {
+        id = poolId,
+        name = msg.Tags.Name,
+        currentAPY = msg.Tags.APY,
+        tvl = msg.Tags.TVL,
+        riskScore = msg.Tags.RiskScore,
+        isActive = msg.Tags.IsActive == "true"
+    }
+    
+    -- Parse supported tokens if provided
+    if msg.Tags.SupportedTokens then
+        local success, tokens = pcall(function()
+            return json.decode(msg.Tags.SupportedTokens)
+        end)
+        if success then
+            poolData.supportedTokens = tokens
+        end
+    end
+    
+    -- Validate and update pool data
+    local isValid, errors = YieldMonitor.validatePoolData(poolData)
+    if not isValid then
+        ao.send({
+            Target = msg.From,
+            Action = "Update-Pool-Error",
+            Error = "Validation failed: " .. table.concat(errors, ", ")
+        })
+        return
+    end
+    
+    local updatedPool = YieldMonitor.updatePoolInfo(poolId, poolData)
+    
+    ao.send({
+        Target = msg.From,
+        Action = "Update-Pool-Success",
+        PoolId = poolId,
+        HealthStatus = updatedPool.healthStatus,
+        Data = json.encode(updatedPool)
+    })
+    
+    log("Pool data updated for: " .. poolId)
+end
+
+-- Pool health check handler
+local function poolHealthHandler(msg)
+    log("Processing pool health check from: " .. msg.From)
+    
+    -- Initialize yield monitor if needed
+    YieldMonitor.init()
+    
+    local poolId = msg.Tags.PoolId
+    
+    if poolId then
+        -- Check specific pool
+        local pool = YieldMonitor.getPoolInfo(poolId)
+        if pool then
+            YieldMonitor.updatePoolHealth(poolId)
+            ao.send({
+                Target = msg.From,
+                Action = "Pool-Health-Response",
+                PoolId = poolId,
+                HealthStatus = pool.healthStatus,
+                Data = json.encode(pool)
+            })
+        else
+            ao.send({
+                Target = msg.From,
+                Action = "Pool-Health-Error",
+                Error = "Pool not found: " .. poolId
+            })
+        end
+    else
+        -- Return health status for all pools
+        local stats = YieldMonitor.getStats()
+        ao.send({
+            Target = msg.From,
+            Action = "Pool-Health-Response",
+            Data = json.encode(stats)
+        })
+    end
+    
+    log("Pool health check completed")
+end
+
+-- Yield monitor stats handler
+local function yieldStatsHandler(msg)
+    log("Processing yield stats request from: " .. msg.From)
+    
+    -- Initialize yield monitor if needed
+    YieldMonitor.init()
+    
+    local stats = YieldMonitor.getStats()
+    local allPools = YieldMonitor.getAllPools()
+    
+    ao.send({
+        Target = msg.From,
+        Action = "Yield-Stats-Response",
+        Data = json.encode({
+            stats = stats,
+            pools = allPools
+        })
+    })
+    
+    log("Yield stats sent to: " .. msg.From)
+end
+
+
+-- Expose Handlers for testing
+ProcessHandlers = {
+    depositHandler = depositHandler,
+    withdrawHandler = withdrawHandler,
+    configureHandler = configureHandler,
+    queryHandler = queryHandler,
+    infoHandler = infoHandler,
+    scanYieldsHandler = scanYieldsHandler,
+    updatePoolDataHandler = updatePoolDataHandler,
+    poolHealthHandler = poolHealthHandler,
+    yieldStatsHandler = yieldStatsHandler
+}
+
 -- Main message handler
 Handlers.add(
     "Deposit",
@@ -212,7 +381,37 @@ Handlers.add(
     infoHandler
 )
 
+-- Yield monitoring handlers
+Handlers.add(
+    "ScanYields",
+    Handlers.utils.hasMatchingTag("Action", "Scan-Yields"),
+    scanYieldsHandler
+)
+
+Handlers.add(
+    "UpdatePoolData",
+    Handlers.utils.hasMatchingTag("Action", "Update-Pool"),
+    updatePoolDataHandler
+)
+
+Handlers.add(
+    "PoolHealth",
+    Handlers.utils.hasMatchingTag("Action", "Pool-Health"),
+    poolHealthHandler
+)
+
+Handlers.add(
+    "YieldStats",
+    Handlers.utils.hasMatchingTag("Action", "Yield-Stats"),
+    yieldStatsHandler
+)
+
 -- Initialize process
 log("YAO Optimizer Vault Process initialized")
 log("Version: " .. State.version)
+
+-- Initialize yield monitoring
+YieldMonitor.init()
+log("Yield monitoring system initialized")
+
 log("Ready to accept deposits and manage autonomous yield optimization")
