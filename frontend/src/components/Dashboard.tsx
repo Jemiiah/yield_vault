@@ -1,10 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import dashboard_grid from "../../public/graph_main_stra.svg";
 import dashboard_grid_dark from "../../public/background_grid_dark.svg";
@@ -15,12 +13,11 @@ import ao_logo from "../../public/ao_logo.svg";
 import stEth from "../../public/stETH 2.svg";
 import dai from "../../public/DAI 1.svg";
 import help_circle from "../../public/help-circle.svg";
-import robot from "../../public/Robot.svg";
-import tokens from "../../public/token1.svg";
 import filter from "../../public/filter.svg";
 import user_circle from "../../public/user-circle.svg";
 import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
+import { useState } from "react";
 
 const tokenCards = [
   {
@@ -79,6 +76,7 @@ const strategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "yao-ai-2",
@@ -93,6 +91,7 @@ const strategies = [
     tvl: "$29,286",
     badges: [],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "yao-ai-3",
@@ -107,6 +106,7 @@ const strategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "yao-ai-4",
@@ -121,6 +121,7 @@ const strategies = [
     tvl: "$29,286",
     badges: [],
     points: "1x Points",
+    isEkubo: false,
   },
   // Ekubo strategies
   {
@@ -199,6 +200,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "ao-wusdc-1",
@@ -213,6 +215,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: [],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "ao-wusdc-2",
@@ -227,6 +230,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "war",
@@ -241,6 +245,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: [],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "wusdc",
@@ -255,6 +260,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "wusdt",
@@ -269,6 +275,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "weth",
@@ -283,6 +290,7 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
   {
     id: "war-ao",
@@ -297,64 +305,12 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+    isEkubo: false,
   },
 ];
-
-// Ekubo strategies section
-const ekuboStrategies = [
-  {
-    id: "ekubo-1",
-    name: "Ekubo xYAO/YAO",
-    protocol: "YAO",
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    hasActionButtons: true,
-  },
-  {
-    id: "ekubo-2",
-    name: "Ekubo xYAO/YAO",
-    protocol: "YAO",
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    hasActionButtons: true,
-  },
-  {
-    id: "ekubo-3",
-    name: "Ekubo xYAO/YAO",
-    protocol: "YAO",
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    hasActionButtons: true,
-  },
-  {
-    id: "ekubo-4",
-    name: "Ekubo xYAO/YAO",
-    protocol: "YAO",
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    hasActionButtons: true,
-  },
-];
-
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("strategies");
-  const [currentPage, setCurrentPage] = useState(1);
+  // const [currentPage, setCurrentPage] = useState(1);
   const theme = useTheme();
   const currentStrategies =
     activeTab === "strategies" ? strategies : findYieldsStrategies;

@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+// import { useParams } from "react-router-dom";
 import verified from "../../public/verified.svg";
 import ao_token from "../../public/ao_logo.svg";
 import back_btn from "../../public/back.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 
 export default function StrategyDetail() {
-  const { id } = useParams<{ id: string }>();
+  //   const { id } = useParams<{ id: string }>();
 
   // Use the id to fetch or identify the specific strategy
   //   const strategyId = id || "default";
