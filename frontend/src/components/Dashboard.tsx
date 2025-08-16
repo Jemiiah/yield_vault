@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 import dashboard_grid from "../../public/graph_main_stra.svg";
+import dashboard_grid_dark from "../../public/background_grid_dark.svg";
 import yao_text from "../../public/YAO.svg";
 import yao_text_white from "../../public/yao_text_white.svg";
 import { useTheme } from "../hooks/useTheme";
@@ -16,8 +17,10 @@ import dai from "../../public/DAI 1.svg";
 import help_circle from "../../public/help-circle.svg";
 import robot from "../../public/Robot.svg";
 import tokens from "../../public/token1.svg";
+import filter from "../../public/filter.svg";
 import user_circle from "../../public/user-circle.svg";
 import verified from "../../public/verified.svg";
+import DashboardFooter from "./dashboard/dashboard_footer";
 
 const tokenCards = [
   {
@@ -66,8 +69,10 @@ const strategies = [
   {
     id: "yao-ai-1",
     name: "YAO AI",
-    token_icon: tokens,
+    token_icon: user_circle,
+    verified: verified,
     protocol: "YAO",
+    protocol_icon: user_circle,
     apy: "-1.75%",
     apyColor: "text-red-500",
     risk: "low",
@@ -78,8 +83,10 @@ const strategies = [
   {
     id: "yao-ai-2",
     name: "YAO AI",
-    token_icon: tokens,
+    token_icon: user_circle,
+    verified: verified,
     protocol: "YAO",
+    protocol_icon: user_circle,
     apy: "9.91%",
     apyColor: "text-blue-500",
     risk: "low",
@@ -90,8 +97,10 @@ const strategies = [
   {
     id: "yao-ai-3",
     name: "YAO AI",
-    token_icon: tokens,
+    token_icon: user_circle,
+    verified: verified,
     protocol: "YAO",
+    protocol_icon: user_circle,
     apy: "9.91%",
     apyColor: "text-blue-500",
     risk: "low",
@@ -102,8 +111,10 @@ const strategies = [
   {
     id: "yao-ai-4",
     name: "YAO AI",
-    token_icon: tokens,
+    token_icon: user_circle,
+    verified: verified,
     protocol: "YAO",
+    protocol_icon: user_circle,
     apy: "9.91%",
     apyColor: "text-blue-500",
     risk: "low",
@@ -111,12 +122,76 @@ const strategies = [
     badges: [],
     points: "1x Points",
   },
+  // Ekubo strategies
+  {
+    id: "ekubo-1",
+    name: "Ekubo xYAO/YAO",
+    token_icon: user_circle,
+    verified: verified,
+    protocol: "YAO",
+    protocol_icon: user_circle,
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    isEkubo: true,
+  },
+  {
+    id: "ekubo-2",
+    name: "Ekubo xYAO/YAO",
+    token_icon: user_circle,
+    verified: verified,
+    protocol: "YAO",
+    protocol_icon: user_circle,
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    isEkubo: true,
+  },
+  {
+    id: "ekubo-3",
+    name: "Ekubo xYAO/YAO",
+    token_icon: user_circle,
+    verified: verified,
+    protocol: "YAO",
+    protocol_icon: user_circle,
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    isEkubo: true,
+  },
+  {
+    id: "ekubo-4",
+    name: "Ekubo xYAO/YAO",
+    token_icon: user_circle,
+    verified: verified,
+    protocol: "YAO",
+    protocol_icon: user_circle,
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    isEkubo: true,
+  },
 ];
 
 const findYieldsStrategies = [
   {
     id: "ao-war",
     name: "AO/wAR",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "Botega",
     apy: "-1.75%",
     apyColor: "text-red-500",
@@ -128,6 +203,9 @@ const findYieldsStrategies = [
   {
     id: "ao-wusdc-1",
     name: "AO/wUSDC",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "Permaswap",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -139,6 +217,9 @@ const findYieldsStrategies = [
   {
     id: "ao-wusdc-2",
     name: "AO/wUSDC",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "Botega",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -150,6 +231,9 @@ const findYieldsStrategies = [
   {
     id: "war",
     name: "wAR",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "LiquidOps",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -161,6 +245,9 @@ const findYieldsStrategies = [
   {
     id: "wusdc",
     name: "wUSDC",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "LiquidOps",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -172,6 +259,9 @@ const findYieldsStrategies = [
   {
     id: "wusdt",
     name: "wUSDT",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "LiquidOps",
     apy: "-1.75%",
     apyColor: "text-red-500",
@@ -183,6 +273,9 @@ const findYieldsStrategies = [
   {
     id: "weth",
     name: "wETH",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "LiquidOps",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -194,6 +287,9 @@ const findYieldsStrategies = [
   {
     id: "war-ao",
     name: "wAR/AO",
+    token_icon: ao_logo,
+    verified: verified,
+    protocol_icon: user_circle,
     protocol: "Botega",
     apy: "9.91%",
     apyColor: "text-blue-500",
@@ -201,6 +297,58 @@ const findYieldsStrategies = [
     tvl: "$29,286",
     badges: ["Hot & New"],
     points: "1x Points",
+  },
+];
+
+// Ekubo strategies section
+const ekuboStrategies = [
+  {
+    id: "ekubo-1",
+    name: "Ekubo xYAO/YAO",
+    protocol: "YAO",
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    hasActionButtons: true,
+  },
+  {
+    id: "ekubo-2",
+    name: "Ekubo xYAO/YAO",
+    protocol: "YAO",
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    hasActionButtons: true,
+  },
+  {
+    id: "ekubo-3",
+    name: "Ekubo xYAO/YAO",
+    protocol: "YAO",
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    hasActionButtons: true,
+  },
+  {
+    id: "ekubo-4",
+    name: "Ekubo xYAO/YAO",
+    protocol: "YAO",
+    apy: "—",
+    apyColor: "text-gray-400",
+    risk: "—",
+    tvl: "—",
+    badges: [],
+    points: "",
+    hasActionButtons: true,
   },
 ];
 
@@ -217,11 +365,19 @@ export default function Dashboard() {
       <section className="relative overflow-hidden mt-5 min-h-[250px]">
         {/* Grid Background */}
         <div className="absolute inset-0 overflow-y-hidden -left-1 -top-[128px]">
-          <img
-            src={dashboard_grid}
-            alt="dashboard_grid"
-            className="absolute inset-0 opacity-40 md:opacity-45 dark:md:opacity-10 "
-          />
+          {theme.theme == "light" ? (
+            <img
+              src={dashboard_grid}
+              alt="dashboard_grid"
+              className="absolute inset-0 opacity-40 md:opacity-45 dark:md:opacity-10 "
+            />
+          ) : (
+            <img
+              src={dashboard_grid_dark}
+              alt="dashboard_grid"
+              className="absolute inset-0 opacity-40 md:opacity-45 dark:md:opacity-50 "
+            />
+          )}
         </div>
 
         <div className="relative z-10 md:mx-12 mx-4 px-4 py-8">
@@ -279,13 +435,13 @@ export default function Dashboard() {
       </section>
 
       <div className="md:mx-12 mx-4 px-4 md:px-6 pb-8">
-        <div className="flex space-x-8 mb-6 border-b border-[#e6e6e6]">
+        <div className="flex space-x-8 mb-6 border-b dark:border-[#20282E] border-[#EAEAEA]">
           <button
             onClick={() => setActiveTab("strategies")}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "strategies"
-                ? "border-[#1fadd8] text-[#1a2228]"
-                : "border-transparent text-[#7e868c] hover:text-[#1a2228]"
+                ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
             }`}
           >
             Strategies
@@ -294,8 +450,8 @@ export default function Dashboard() {
             onClick={() => setActiveTab("find-yields")}
             className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "find-yields"
-                ? "border-[#1fadd8] text-[#1a2228]"
-                : "border-transparent text-[#7e868c] hover:text-[#1a2228]"
+                ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
             }`}
           >
             Find Yields
@@ -305,7 +461,10 @@ export default function Dashboard() {
         {/* Token Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {tokenCards.map((token, index) => (
-            <Card key={index} className="bg-white/80 w-full border-none">
+            <Card
+              key={index}
+              className="bg-white/80 gradient-card w-full border-none"
+            >
               <CardContent className="p-5 flex flex-col items-center py-0">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-2">
@@ -313,7 +472,7 @@ export default function Dashboard() {
                       <img src={token.logo} alt={token.symbol} className=" " />
                     </div>
 
-                    <div className="text-[#1a2228] flex flex-col items-center font-semibold">
+                    <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
                       <span className="text-base">
                         {token.amount} {token.symbol}
                       </span>
@@ -324,7 +483,7 @@ export default function Dashboard() {
                   </div>
 
                   <div className="flex flex-col items-end justify-end font-semibold">
-                    <div className="text-[#1a2228] text-base">
+                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
                       {token.aoAmount} APY
                     </div>
                     <div className="text-[#7e868c] text-sm">
@@ -350,46 +509,58 @@ export default function Dashboard() {
         {activeTab === "find-yields" && (
           <div className="flex items-center justify-between mb-6">
             <div className="flex space-x-4">
-              <Button variant="outline" size="sm" className="bg-white">
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+              >
                 All
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+              >
                 Dexi
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+              >
                 Botega
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+              >
                 Permaswap
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+              >
                 Liquid Ops
               </Button>
             </div>
-            <Button variant="outline" size="sm" className="bg-white">
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z"
-                />
-              </svg>
+            <Button
+              variant="outline"
+              size="sm"
+              className=" text-[#565E64] dark:text-[#95A0A6] hover:bg-none border border-[#EAEAEA] dark:border-[#192127]"
+            >
+              <img src={filter} alt="filter" />
               Filter
             </Button>
           </div>
         )}
 
-        {/* Strategy Table */}
-        <Card className="bg-white border-none">
+        {/* Find Yields Table */}
+        <Card className="bg-none border-none px-0">
           <CardContent className="p-0">
             {/* Table Header */}
-            <div className="grid grid-cols-7 gap-4 p-4 pt-0 pb-4 border-b border-[#e6e6e6] text-[#7e868c] text-sm font-medium">
+            <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
               <div className="col-span-3">STRATEGY NAME</div>
               {/* <div className="text-center"></div> */}
               <div className="text-center">APY</div>
@@ -401,71 +572,128 @@ export default function Dashboard() {
             {/* Strategy Rows */}
             {currentStrategies.map((strategy, index) => (
               <Link key={index} to={`/strategy/${strategy.id}`}>
-                <div className="grid grid-cols-7 gap-4 p-4 border-b border-[#e6e6e6] hover:bg-[#f8f7f4] transition-colors cursor-pointer">
-                  <div className="flex items-center space-x-3 col-span-3">
-                    <div className=" flex items-center justify-center">
-                      <img
-                        src={strategy.token_icon}
-                        alt={strategy.name}
-                        className=""
-                      />
+                <div
+                  className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
+                >
+                  {strategy.isEkubo && (
+                    <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
+                  )}
+
+                  <div className="flex space-x-3 col-span-3">
+                    <div className=" flex">
+                      <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                        <img
+                          src={strategy.token_icon}
+                          alt={strategy.name}
+                          className=""
+                        />
+                      </span>
+                      <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
+                        <img
+                          src={strategy.token_icon}
+                          alt={strategy.name}
+                          className=" "
+                        />
+                      </span>
                     </div>
-                    <div className="">
-                      <div className="font-medium text-[#1a2228] flex items-center space-x-2">
+                    <div className="space-y-1">
+                      <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
                         <span>{strategy.name}</span>
                         {strategy.badges.map((badge, i) => (
-                          <Badge
-                            key={i}
-                            variant="secondary"
-                            className="bg-green-100 text-green-800 text-xs"
-                          >
-                            {badge}
-                          </Badge>
+                          <div className="flex items-center space-x-2">
+                            <span className="w-4 h-4 md:w-8 md:h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                              <img
+                                src={strategy.verified}
+                                alt={strategy.name}
+                                className=""
+                              />
+                            </span>
+
+                            <Badge
+                              key={i}
+                              variant="secondary"
+                              className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
+                            >
+                              {badge}
+                            </Badge>
+                          </div>
                         ))}
                       </div>
-                      <div className="text-[#7e868c] text-sm">
-                        {strategy.protocol}
+
+                      <div className=" flex items-center space-x-1">
+                        <img
+                          src={strategy.protocol_icon}
+                          alt={strategy.name}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-[#808c7e] text-sm">
+                          {strategy.protocol}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="text-center">
-                    <div className={`font-medium ${strategy.apyColor}`}>
-                      {strategy.apy}
-                    </div>
-                    <div className="text-[#7e868c] text-sm">
-                      {strategy.points}
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="flex justify-center">
-                      <div className="flex space-x-1">
-                        <div className="w-1.5 h-6 bg-green-400 rounded-sm"></div>
-                        <div className="w-1.5 h-6 bg-green-400 rounded-sm"></div>
-                        <div className="w-1.5 h-6 bg-gray-200 rounded-sm"></div>
-                        <div className="w-1.5 h-6 bg-gray-200 rounded-sm"></div>
-                        <div className="w-1.5 h-6 bg-gray-200 rounded-sm"></div>
+                  <div className="text-center space-y-1">
+                    {strategy.isEkubo ? (
+                      <div
+                        className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
+                      >
+                        {strategy.apy}
                       </div>
+                    ) : (
+                      <div className={`font-medium ${strategy.apyColor}`}>
+                        {strategy.apy}
+                      </div>
+                    )}
+
+                    <div className="">
+                      {strategy.isEkubo ? (
+                        <div></div>
+                      ) : (
+                        <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
+                          <span>{strategy.points}</span>
+
+                          <span>
+                            <img src={user_circle} alt={strategy.name} />
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-center font-medium text-[#1a2228]">
-                    {strategy.tvl}
+                  <div className="text-center">
+                    {strategy.isEkubo ? (
+                      <div className="flex justify-center space-x-2">
+                        <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                          —
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-center">
+                        <div className="flex space-x-1.5">
+                          <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
+                          <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
+                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="text-center">
-                    <button className="p-1 rounded-full hover:bg-[#e9e9e9]">
-                      <svg
-                        className="w-4 h-4 text-[#7e868c]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                  <div className="">
+                    {strategy.isEkubo ? (
+                      <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                        {strategy.tvl}
+                      </div>
+                    ) : (
+                      <div className="text-center font-medium text-[#565E64] ">
+                        {strategy.tvl}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-center ">
+                    <button className="p-1.5 hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                      <img src={help_circle} alt={strategy.name} />
                     </button>
                   </div>
                 </div>
@@ -476,7 +704,12 @@ export default function Dashboard() {
 
         {/* Pagination */}
         <div className="flex items-center justify-center space-x-2 mt-6">
-          <Button variant="ghost" size="sm" disabled>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[#7E868C] dark:text-[#565E64]"
+            disabled
+          >
             <svg
               className="w-4 h-4 mr-1"
               fill="none"
@@ -493,26 +726,47 @@ export default function Dashboard() {
             Prev
           </Button>
           <Button
-            variant="outline"
+            variant="default"
             size="sm"
-            className="bg-[#1a2228] text-white"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
           >
             1
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
+          >
             2
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
+          >
             3
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+          >
             4
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+          >
             5
           </Button>
+
           <span className="text-[#7e868c]">...</span>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+          >
             Next
             <svg
               className="w-4 h-4 ml-1"
@@ -531,21 +785,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* YOA Bot */}
-      <div className="fixed bottom-6 right-6">
-        <Card className="bg-white border-none shadow-lg">
-          <CardContent className="p-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 bg-[#1a2228] rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-bold">A</span>
-              </div>
-              <span className="text-[#1a2228] text-sm font-medium">
-                YOA Bot
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardFooter />
     </div>
   );
 }

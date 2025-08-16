@@ -83,3 +83,11 @@
 .animate-float-grid {
   animation: float-grid 8s ease-in-out infinite;
 }
+
+.gradient-card {
+  @apply rounded-md md:rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg;
+}
+
+.dark-switch {
+  @apply bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] shadow-lg;
+}

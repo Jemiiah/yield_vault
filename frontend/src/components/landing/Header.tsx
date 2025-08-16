@@ -4,6 +4,7 @@ import { useTheme } from "@/hooks/useTheme";
 import logo from "../../../public/yao_logo.svg";
 import yao_logo_white from "../../../public/yao_logo_white.svg";
 import ConnectButton from "../ConnectButton";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -35,13 +36,13 @@ const Header = () => {
       }`}
     >
       <div className="flex items-center space-x-4 md:space-x-8">
-        <div className="text-xl md:text-2xl font-bold text-[#1a2228]">
+        <Link to={"/"} className="text-xl md:text-2xl font-bold text-[#1a2228]">
           {theme === "light" ? (
             <img src={logo} alt="YAO" className="w-16 md:w-auto" />
           ) : (
             <img src={yao_logo_white} alt="YAO" className="w-16 md:w-auto" />
           )}
-        </div>
+        </Link>
         <nav className="hidden md:flex space-x-6">
           {navItems.map((item) => {
             const isActive = window.location.pathname === item.href;

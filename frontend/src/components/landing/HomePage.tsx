@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Hero from "@/components/landing/Hero";
 import SetsUsApart from "@/components/landing/SetsUsApart";
 import WtfIsYaoSection from "@/components/landing/WtfIsYaoSection";
+import Footer from "./Footer";
 
 const HomePage = () => {
   return (
@@ -68,6 +69,9 @@ const HomePage = () => {
 
       {/* What Sets Us Apart Section */}
       <SetsUsApart />
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 };

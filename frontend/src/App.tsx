@@ -2,9 +2,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "@/components/Dashboard";
 import HomePage from "@/components/landing/HomePage";
 import Header from "@/components/landing/Header";
-import Footer from "@/components/landing/Footer";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Strategy from "./components/Strategy";
+import YaoBot from "./components/dashboard/yao_bot";
 
 function App() {
   return (
@@ -23,8 +23,7 @@ function App() {
             </Routes>
           </main>
 
-          {/* Static Footer */}
-          <Footer />
+          <YaoBot />
         </div>
       </Router>
     </ThemeProvider>
