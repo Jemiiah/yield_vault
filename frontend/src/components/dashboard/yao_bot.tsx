@@ -1,5 +1,5 @@
 import { Card, CardContent } from "../ui/card";
-import robot from "../../../public/robot.svg";
+import robot from "../../../public/Robot.svg";
 
 const YaoBot = () => {
   return (
