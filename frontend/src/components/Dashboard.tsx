@@ -390,11 +390,11 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div className="md:mx-12 mx-4 px-4 md:px-6 pb-8">
-        <div className="flex space-x-8 mb-6 border-b dark:border-[#20282E] border-[#EAEAEA]">
+      <div className="mx-4 sm:mx-6 md:mx-12 px-2 sm:px-4 md:px-6 pb-8">
+        <div className="flex space-x-4 sm:space-x-6 md:space-x-8 mb-4 sm:mb-6 border-b dark:border-[#20282E] border-[#EAEAEA]">
           <button
             onClick={() => setActiveTab("strategies")}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
               activeTab === "strategies"
                 ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
                 : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
@@ -404,7 +404,7 @@ export default function Dashboard() {
           </button>
           <button
             onClick={() => setActiveTab("find-yields")}
-            className={`pb-2 px-1 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
               activeTab === "find-yields"
                 ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
                 : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
@@ -415,40 +415,40 @@ export default function Dashboard() {
         </div>
 
         {/* Token Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {tokenCards.map((token, index) => (
             <Card
               key={index}
               className="bg-white/80 gradient-card w-full border-none"
             >
-              <CardContent className="p-5 flex flex-col items-center py-0">
+              <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-2">
-                    <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
-                      <img src={token.logo} alt={token.symbol} className=" " />
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
+                      <img src={token.logo} alt={token.symbol} className="" />
                     </div>
 
                     <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
-                      <span className="text-base">
+                      <span className="text-sm sm:text-base">
                         {token.amount} {token.symbol}
                       </span>
-                      <span className="text-[#7e868c] text-sm">
+                      <span className="text-[#7e868c] text-xs sm:text-sm">
                         {token.value}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end justify-end font-semibold">
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
+                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-sm sm:text-base">
                       {token.aoAmount} APY
                     </div>
-                    <div className="text-[#7e868c] text-sm">
+                    <div className="text-[#7e868c] text-xs sm:text-sm">
                       {token.aoValue}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between w-full mt-4">
+                <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
                   <div className="text-[#7e868c] text-xs font-semibold">
                     {token.protocol}
                   </div>
@@ -463,40 +463,40 @@ export default function Dashboard() {
 
         {/* Filter Tabs for Find Yields */}
         {activeTab === "find-yields" && (
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex space-x-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+            <div className="flex flex-wrap gap-2 sm:gap-4">
               <Button
                 variant="default"
                 size="sm"
-                className="bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+                className="bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
               >
                 All
               </Button>
               <Button
                 variant="default"
                 size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
               >
                 Dexi
               </Button>
               <Button
                 variant="default"
                 size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
               >
                 Botega
               </Button>
               <Button
                 variant="default"
                 size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
               >
                 Permaswap
               </Button>
               <Button
                 variant="default"
                 size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484]"
+                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
               >
                 Liquid Ops
               </Button>
@@ -504,170 +504,265 @@ export default function Dashboard() {
             <Button
               variant="outline"
               size="sm"
-              className=" text-[#565E64] dark:text-[#95A0A6] hover:bg-none border border-[#EAEAEA] dark:border-[#192127]"
+              className="text-[#565E64] dark:text-[#95A0A6] hover:bg-none border border-[#EAEAEA] dark:border-[#192127] text-xs sm:text-sm"
             >
-              <img src={filter} alt="filter" />
-              Filter
+              <img
+                src={filter}
+                alt="filter"
+                className="w-3 h-3 sm:w-4 sm:h-4"
+              />
+              <span className="ml-1">Filter</span>
             </Button>
           </div>
         )}
 
-        {/* Find Yields Table */}
-        <Card className="bg-none border-none px-0">
-          <CardContent className="p-0">
-            {/* Table Header */}
-            <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
-              <div className="col-span-3">STRATEGY NAME</div>
-              {/* <div className="text-center"></div> */}
-              <div className="text-center">APY</div>
-              <div className="text-center">RISK</div>
-              <div className="text-center">TVL</div>
-              <div className="text-center">INFO</div>
-            </div>
+        {/* Desktop Table View */}
+        <div className="hidden lg:block">
+          <Card className="bg-none border-none px-0">
+            <CardContent className="p-0">
+              {/* Table Header */}
+              <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
+                <div className="col-span-3">STRATEGY NAME</div>
+                <div className="text-center">APY</div>
+                <div className="text-center">RISK</div>
+                <div className="text-center">TVL</div>
+                <div className="text-center">INFO</div>
+              </div>
 
-            {/* Strategy Rows */}
-            {currentStrategies.map((strategy, index) => (
-              <Link key={index} to={`/strategy/${strategy.id}`}>
-                <div
-                  className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
-                >
-                  {strategy.isEkubo && (
-                    <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
-                  )}
-
-                  <div className="flex space-x-3 col-span-3">
-                    <div className=" flex">
-                      <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                        <img
-                          src={strategy.token_icon}
-                          alt={strategy.name}
-                          className=""
-                        />
-                      </span>
-                      <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
-                        <img
-                          src={strategy.token_icon}
-                          alt={strategy.name}
-                          className=" "
-                        />
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
-                        <span>{strategy.name}</span>
-                        {strategy.badges.map((badge, i) => (
-                          <div className="flex items-center space-x-2">
-                            <span className="w-4 h-4 md:w-8 md:h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                              <img
-                                src={strategy.verified}
-                                alt={strategy.name}
-                                className=""
-                              />
-                            </span>
-
-                            <Badge
-                              key={i}
-                              variant="secondary"
-                              className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
-                            >
-                              {badge}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className=" flex items-center space-x-1">
-                        <img
-                          src={strategy.protocol_icon}
-                          alt={strategy.name}
-                          className="w-4 h-4"
-                        />
-                        <span className="text-[#808c7e] text-sm">
-                          {strategy.protocol}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-center space-y-1">
-                    {strategy.isEkubo ? (
-                      <div
-                        className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
-                      >
-                        {strategy.apy}
-                      </div>
-                    ) : (
-                      <div className={`font-medium ${strategy.apyColor}`}>
-                        {strategy.apy}
-                      </div>
+              {/* Strategy Rows */}
+              {currentStrategies.map((strategy, index) => (
+                <Link key={index} to={`/strategy/${strategy.id}`}>
+                  <div
+                    className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
+                  >
+                    {strategy.isEkubo && (
+                      <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
                     )}
 
-                    <div className="">
-                      {strategy.isEkubo ? (
-                        <div></div>
-                      ) : (
-                        <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
-                          <span>{strategy.points}</span>
+                    <div className="flex space-x-3 col-span-3">
+                      <div className=" flex">
+                        <span className="w-8 h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                          <img
+                            src={strategy.token_icon}
+                            alt={strategy.name}
+                            className=""
+                          />
+                        </span>
+                        <span className="w-8 h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
+                          <img
+                            src={strategy.token_icon}
+                            alt={strategy.name}
+                            className=" "
+                          />
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
+                          <span>{strategy.name}</span>
+                          {strategy.badges.map((badge, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center space-x-2"
+                            >
+                              <span className="w-8 h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                                <img
+                                  src={strategy.verified}
+                                  alt={strategy.name}
+                                  className=""
+                                />
+                              </span>
 
-                          <span>
-                            <img src={user_circle} alt={strategy.name} />
+                              <Badge
+                                variant="secondary"
+                                className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
+                              >
+                                {badge}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className=" flex items-center space-x-1">
+                          <img
+                            src={strategy.protocol_icon}
+                            alt={strategy.name}
+                            className="w-4 h-4"
+                          />
+                          <span className="text-[#808c7e] text-sm">
+                            {strategy.protocol}
                           </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-center space-y-1">
+                      {strategy.isEkubo ? (
+                        <div
+                          className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
+                        >
+                          {strategy.apy}
+                        </div>
+                      ) : (
+                        <div className={`font-medium ${strategy.apyColor}`}>
+                          {strategy.apy}
+                        </div>
+                      )}
+
+                      <div className="">
+                        {strategy.isEkubo ? (
+                          <div></div>
+                        ) : (
+                          <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
+                            <span>{strategy.points}</span>
+
+                            <span>
+                              <img src={user_circle} alt={strategy.name} />
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      {strategy.isEkubo ? (
+                        <div className="flex justify-center space-x-2">
+                          <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                            —
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center">
+                          <div className="flex space-x-1.5">
+                            <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
+                            <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
+                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                          </div>
                         </div>
                       )}
                     </div>
+
+                    <div className="">
+                      {strategy.isEkubo ? (
+                        <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                          {strategy.tvl}
+                        </div>
+                      ) : (
+                        <div className="text-center font-medium text-[#565E64] ">
+                          {strategy.tvl}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-center ">
+                      <button className="p-1.5 hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                        <img src={help_circle} alt={strategy.name} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    {strategy.isEkubo ? (
-                      <div className="flex justify-center space-x-2">
-                        <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                          —
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex justify-center">
-                        <div className="flex space-x-1.5">
-                          <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
-                          <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
-                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
-                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
-                          <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Mobile/Tablet Card View */}
+        <div className="lg:hidden space-y-3 sm:space-y-4 relative">
+          {currentStrategies.map((strategy, index) => (
+            <Link key={index} to={`/strategy/${strategy.id}`}>
+              <div className="relative">
+                {strategy.isEkubo && (
+                  <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none rounded-lg"></div>
+                )}
+                <Card className="bg-white dark:bg-[#141C22] mb-2 p-2 sm:p-3 border border-gray-200 dark:border-[#20282E] shadow-sm hover:shadow-md transition-all duration-200">
+                  <CardContent className="px-3 sm:px-4 py-2 sm:py-3">
+                    <div className="relative z-20">
+                      {/* Header - Title and Token */}
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <img
+                            src={strategy.token_icon}
+                            alt={strategy.name}
+                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
+                          />
+                          <div>
+                            <h3 className="font-semibold text-[#1a2228] dark:text-[#FEFEFD] text-xs sm:text-sm">
+                              {strategy.name}
+                            </h3>
+                            <p className="text-[#7e868c] text-xs flex items-center space-x-1">
+                              <span>{strategy.protocol}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Verification and Badges */}
+                        <div className="flex items-center space-x-1 sm:space-x-2">
+                          <img
+                            src={strategy.verified}
+                            alt="verified"
+                            className="w-3 h-3 sm:w-4 sm:h-4"
+                          />
+                          {strategy.badges.map((badge, i) => (
+                            <Badge
+                              key={i}
+                              variant="secondary"
+                              className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white shadow-sm text-[#10181D] text-xs px-1 sm:px-2 py-1"
+                            >
+                              {badge === "Hot & New" ? "Hot & New" : badge}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </div>
 
-                  <div className="">
-                    {strategy.isEkubo ? (
-                      <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                        {strategy.tvl}
-                      </div>
-                    ) : (
-                      <div className="text-center font-medium text-[#565E64] ">
-                        {strategy.tvl}
-                      </div>
-                    )}
-                  </div>
+                      {/* Metrics Row */}
+                      <div className="flex items-center justify-between mb-2 sm:mb-3">
+                        {/* APY */}
+                        <div className="text-center">
+                          <p className="text-[#7e868c] text-xs mb-1">APY</p>
+                          <p
+                            className={`font-semibold text-xs sm:text-sm ${strategy.apyColor}`}
+                          >
+                            {strategy.apy}
+                          </p>
+                        </div>
 
-                  <div className="text-center ">
-                    <button className="p-1.5 hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                      <img src={help_circle} alt={strategy.name} />
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+                        {/* Risk */}
+                        <div className="text-center">
+                          <p className="text-[#7e868c] text-xs mb-1">RISK</p>
+                          <div className="flex space-x-1">
+                            <div className="w-1 h-3 sm:h-4 bg-[#69C02F] rounded-sm"></div>
+                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
+                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
+                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
+                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
+                          </div>
+                        </div>
+
+                        {/* TVL */}
+                        <div className="text-center">
+                          <p className="text-[#7e868c] text-xs mb-1">TVL</p>
+                          <p className="font-semibold text-[#565E64] text-xs sm:text-sm">
+                            {strategy.tvl}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </Link>
+          ))}
+        </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-center space-x-2 mt-6">
+        <div className="flex items-center justify-center space-x-1 sm:space-x-2 mt-4 sm:mt-6">
           <Button
             variant="ghost"
             size="sm"
-            className="text-[#7E868C] dark:text-[#565E64]"
+            className="text-[#7E868C] dark:text-[#565E64] text-xs sm:text-sm"
             disabled
           >
             <svg
-              className="w-4 h-4 mr-1"
+              className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -679,53 +774,53 @@ export default function Dashboard() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            Prev
+            <span className="hidden sm:inline">Prev</span>
           </Button>
           <Button
             variant="default"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
           >
             1
           </Button>
           <Button
             variant="default"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
           >
             2
           </Button>
           <Button
             variant="default"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] "
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
           >
             3
           </Button>
           <Button
             variant="default"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
           >
             4
           </Button>
           <Button
             variant="default"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
           >
             5
           </Button>
 
-          <span className="text-[#7e868c]">...</span>
+          <span className="text-[#7e868c] text-xs sm:text-sm">...</span>
           <Button
             variant="outline"
             size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6]"
+            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm"
           >
-            Next
+            <span className="hidden sm:inline">Next</span>
             <svg
-              className="w-4 h-4 ml-1"
+              className="w-3 h-3 sm:w-4 sm:h-4 ml-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
