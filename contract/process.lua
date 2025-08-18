@@ -1,6 +1,9 @@
 -- YAO Optimizer - Autonomous Vault Process
 -- AO Network Implementation
 
+local config = require('config')
+local utils = require('modules.utils')
+
 -- Initialize global state
 if not State then
     State = {
@@ -19,13 +22,16 @@ end
 local json = require('json')
 local YieldMonitor = require('modules.yield-monitor')
 
-
 local function log(message)
     print("[VAULT] " .. tostring(message))
 end
 
 local function validateAddress(address)
     return address and type(address) == "string" and #address > 0
+end
+
+local function isPaymentToken(token)
+    return config.VAULT.TOKEN_ID == token or false
 end
 
 local function getCurrentTimestamp()
@@ -35,38 +41,42 @@ end
 -- Deposit handler
 local function depositHandler(msg)
     log("Processing deposit from: " .. msg.From)
-    
-    local amount = tonumber(msg.Tags.Amount)
-    if not amount or amount <= 0 then
+
+    if isPaymentToken(msg.From) then
+        local amount = tonumber(msg.Tags.Amount)
+        if not amount or amount <= 0 then
+            ao.send({
+                Target = msg.Sender,
+                Action = "Deposit-Error",
+                Error = "Invalid deposit amount"
+            })
+            return
+        end
+        
+        -- Calculate shares to mint (simplified for now)
+        local sharesToMint = amount
+        if State.totalShares > 0 then
+            sharesToMint = (amount * State.totalShares) / State.totalAssets
+        end
+        
+        -- Update state
+        State.userShares[msg.Sender] = (State.userShares[msg.Sender] or 0) + sharesToMint
+        State.totalShares = State.totalShares + sharesToMint
+        State.totalAssets = State.totalAssets + amount
+        
+        -- Send confirmation
         ao.send({
-            Target = msg.From,
-            Action = "Deposit-Error",
-            Error = "Invalid deposit amount"
+            Target = msg.Sender,
+            Action = "Deposit-Success",
+            Amount = tostring(amount),
+            Shares = tostring(sharesToMint),
+            TotalShares = tostring(State.totalShares)
         })
-        return
+        
+        log("Deposit successful: " .. amount .. " tokens, " .. sharesToMint .. " shares minted")
     end
-    
-    -- Calculate shares to mint (simplified for now)
-    local sharesToMint = amount
-    if State.totalShares > 0 then
-        sharesToMint = (amount * State.totalShares) / State.totalAssets
-    end
-    
-    -- Update state
-    State.userShares[msg.From] = (State.userShares[msg.From] or 0) + sharesToMint
-    State.totalShares = State.totalShares + sharesToMint
-    State.totalAssets = State.totalAssets + amount
-    
-    -- Send confirmation
-    ao.send({
-        Target = msg.From,
-        Action = "Deposit-Success",
-        Amount = tostring(amount),
-        Shares = tostring(sharesToMint),
-        TotalShares = tostring(State.totalShares)
-    })
-    
-    log("Deposit successful: " .. amount .. " tokens, " .. sharesToMint .. " shares minted")
+
+    utils.returnTokens(msg, "Invalid token")
 end
 
 -- Withdraw handler
@@ -336,7 +346,6 @@ local function yieldStatsHandler(msg)
     log("Yield stats sent to: " .. msg.From)
 end
 
-
 -- Expose Handlers for testing
 ProcessHandlers = {
     depositHandler = depositHandler,
@@ -354,6 +363,12 @@ ProcessHandlers = {
 Handlers.add(
     "Deposit",
     Handlers.utils.hasMatchingTag("Action", "Deposit"),
+    depositHandler
+)
+
+Handlers.add(
+    "creditNotice",
+    Handlers.utils.hasMatchingTag("Action", "Credit-Notice"),
     depositHandler
 )
 

@@ -9,6 +9,20 @@ function Utils.log(message, level)
     print("[" .. timestamp .. "] [" .. level .. "] [VAULT] " .. tostring(message))
 end
 
+function Utils.sendToken(token, recipient, quantity, note)
+    ao.send({
+        Target     = token,
+        Action     = "Transfer",
+        Recipient  = recipient,
+        Quantity   = quantity,
+        ["X-Note"] = note or "Sending tokens from Random Process"
+    })
+end
+
+function Utils.returnTokens(msg, errMessage)
+    Utils.sendTokens(msg.From, msg.Sender, msg.Quantity, errMessage)
+end
+
 -- Address validation
 function Utils.validateAddress(address)
     return address and type(address) == "string" and #address > 0
