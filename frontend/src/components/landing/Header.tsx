@@ -5,6 +5,7 @@ import logo from "../../../public/yao_logo.svg";
 import yao_logo_white from "../../../public/yao_logo_white.svg";
 import ConnectButton from "../ConnectButton";
 import { Link } from "react-router-dom";
+import aox_logo from "../../../public/aox.svg";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -25,7 +26,7 @@ const Header = () => {
     { href: "/", label: "Home" },
     { href: "/docs", label: "Docs" },
     { href: "/faqs", label: "FAQs" },
-    { href: "/bridges", label: "Bridges" },
+    { href: "/bridge", label: "Bridge" },
   ];
 
   return (
@@ -48,7 +49,7 @@ const Header = () => {
           {navItems.map((item) => {
             const isActive = window.location.pathname === item.href;
 
-            if (item.label === "Bridges") {
+            if (item.label === "Bridge") {
               return (
                 <div
                   key={item.href}
@@ -57,7 +58,7 @@ const Header = () => {
                   onMouseLeave={() => setIsBridgesDropdownOpen(false)}
                 >
                   <button
-                    className={`text-sm transition-colors flex items-center space-x-1.5 ${
+                    className={`text-sm transition-colors px-1.5 flex items-center space-x-1.5 ${
                       isActive
                         ? "text-[#1a2228] dark:text-white font-semibold"
                         : "text-[#7E868C] dark:text-gray-300 hover:text-[#1A2228] dark:hover:text-white"
@@ -73,13 +74,18 @@ const Header = () => {
 
                   {/* Dropdown Menu */}
                   {isBridgesDropdownOpen && (
-                    <div className="absolute top-full left-0 w-[75px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    <div className="absolute top-full left-0 w-[85px] bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
                       <Link
                         to="https://aox.xyz/#/bridge"
                         target="_blank"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors md:flex items-center space-x-2"
                       >
-                        AOX
+                        <img
+                          src={aox_logo}
+                          alt="AOX"
+                          className="w-4 md:w-5 h-4 md:h-5"
+                        />
+                        <span>AOX</span>
                       </Link>
                     </div>
                   )}

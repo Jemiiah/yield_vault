@@ -4,12 +4,15 @@ import "./index.css";
 import App from "./App.tsx";
 import { WalletProvider } from "./components/WalletProvider.tsx";
 import { ThemeProvider } from "./contexts/ThemeContext.tsx";
+import { ChatbotProvider } from "./contexts/ChatbotContext.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider>
       <WalletProvider>
-        <App />
+        <ChatbotProvider config={{ position: "bottom-right", theme: "auto" }}>
+          <App />
+        </ChatbotProvider>
       </WalletProvider>
     </ThemeProvider>
   </StrictMode>

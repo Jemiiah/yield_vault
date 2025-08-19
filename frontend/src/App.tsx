@@ -4,7 +4,7 @@ import HomePage from "@/components/landing/HomePage";
 import Header from "@/components/landing/Header";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Strategy from "./components/Strategy";
-import YaoBot from "./components/dashboard/yao_bot";
+import YaoChatbot from "./components/chatbot/YaoChatbot";
 
 function App() {
   return (
@@ -23,7 +23,13 @@ function App() {
             </Routes>
           </main>
 
-          <YaoBot />
+          <YaoChatbot
+            welcomeMessage="Hello! I'm your AI assistant. How can I help you today?"
+            maxRetries={3}
+            maxMessageLength={1500}
+            enableMessageStatus={true}
+            enableTypingIndicator={true}
+          />
         </div>
       </Router>
     </ThemeProvider>
