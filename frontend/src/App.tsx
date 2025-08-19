@@ -24,7 +24,7 @@ function App() {
           </main>
 
           <YaoChatbot
-            welcomeMessage="Hello! I'm your AI assistant. How can I help you today?"
+            welcomeMessage="Hallo! I'm your AI assistant. How can I help you today?"
             maxRetries={3}
             maxMessageLength={1500}
             enableMessageStatus={true}
