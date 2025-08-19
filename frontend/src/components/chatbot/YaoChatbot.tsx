@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Bot, AlertCircle, RefreshCw, User } from "lucide-react";
-import YaoBot from "@/components/chatbot/YaoChatbot";
+import YaoBot from "../dashboard/Yao_bot";
 
 // Enhanced message types for AI integration
 interface Message {
