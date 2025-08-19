@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent } from "../ui/card";
 import robot from "../../../public/Robot.svg";
 
