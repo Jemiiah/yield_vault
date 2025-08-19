@@ -1,7 +1,7 @@
 import { Card, CardContent } from "../ui/card";
 import robot from "../../../public/Robot.svg";
 
-const YaoBot = () => {
+export const YaoBot = () => {
   return (
     <div className="fixed z-20 bottom-6 right-6">
       <Card className=" border-none py-3.5 gradient-card">
@@ -17,5 +17,3 @@ const YaoBot = () => {
     </div>
   );
 };
-
-export default YaoBot;
