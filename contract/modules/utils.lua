@@ -1,4 +1,3 @@
--- Utility Functions for YAO Optimizer
 
 local Utils = {}
 
@@ -9,7 +8,7 @@ function Utils.log(message, level)
     print("[" .. timestamp .. "] [" .. level .. "] [VAULT] " .. tostring(message))
 end
 
-function Utils.sendToken(token, recipient, quantity, note)
+function Utils.sendTokens(token, recipient, quantity, note)
     ao.send({
         Target     = token,
         Action     = "Transfer",

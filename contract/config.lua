@@ -62,7 +62,7 @@ Config.REBALANCING = {
 
 -- External service settings
 Config.EXTERNAL_SERVICES = {
-    ASTRO_USD_PROCESS = "", -- AstroUSD process ID (to be set)
+    ASTRO_USD_PROCESS = "7zH9dlMNoxprab9loshv3Y7WG45DOny_Vrq9KrXObdQ", -- AstroUSD/USDC process ID
     APUS_AI_ENDPOINT = "", -- Apus Network AI service endpoint
     RANDAO_PROCESS = "", -- RandAO process ID
     ARDRIVE_PROCESS = "", -- ArDrive process ID for storage

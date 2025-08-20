@@ -22,28 +22,18 @@ end
 local json = require('json')
 local YieldMonitor = require('modules.yield-monitor')
 
-local function log(message)
-    print("[VAULT] " .. tostring(message))
-end
-
-local function validateAddress(address)
-    return address and type(address) == "string" and #address > 0
-end
-
 local function isPaymentToken(token)
     return config.VAULT.TOKEN_ID == token or false
 end
 
-local function getCurrentTimestamp()
-    return os.time()
-end
 
 -- Deposit handler
 local function depositHandler(msg)
-    log("Processing deposit from: " .. msg.From)
+    utils.log("Processing deposit from: " .. msg.From)
 
+    -- Accept deposits only via Credit-Notice from the accepted token process
     if isPaymentToken(msg.From) then
-        local amount = tonumber(msg.Tags.Amount)
+        local amount = tonumber(msg.Tags.Quantity)
         if not amount or amount <= 0 then
             ao.send({
                 Target = msg.Sender,
@@ -53,11 +43,8 @@ local function depositHandler(msg)
             return
         end
         
-        -- Calculate shares to mint (simplified for now)
-        local sharesToMint = amount
-        if State.totalShares > 0 then
-            sharesToMint = (amount * State.totalShares) / State.totalAssets
-        end
+        -- Calculate shares to mint using utils
+        local sharesToMint = utils.calculateSharesForDeposit(amount, State.totalShares, State.totalAssets)
         
         -- Update state
         State.userShares[msg.Sender] = (State.userShares[msg.Sender] or 0) + sharesToMint
@@ -73,15 +60,27 @@ local function depositHandler(msg)
             TotalShares = tostring(State.totalShares)
         })
         
-        log("Deposit successful: " .. amount .. " tokens, " .. sharesToMint .. " shares minted")
+        utils.log("Deposit successful: " .. amount .. " tokens, " .. sharesToMint .. " shares minted")
+        return
+    else
+        -- If this is a Credit-Notice from an unsupported token, refund it
+        if msg.Tags and msg.Tags.Action == "Credit-Notice" then
+            utils.returnTokens(msg, "Invalid token")
+            return
+        end
+        -- Otherwise it's likely a direct Deposit call without funds; reject politely
+        ao.send({
+            Target = msg.Sender or msg.From,
+            Action = "Deposit-Error",
+            Error = "Deposits must be sent via token Transfer (Credit-Notice)"
+        })
+        return
     end
-
-    utils.returnTokens(msg, "Invalid token")
 end
 
 -- Withdraw handler
 local function withdrawHandler(msg)
-    log("Processing withdrawal from: " .. msg.From)
+    utils.log("Processing withdrawal from: " .. msg.From)
     
     local sharesToBurn = tonumber(msg.Tags.Shares)
     if not sharesToBurn or sharesToBurn <= 0 then
@@ -103,13 +102,16 @@ local function withdrawHandler(msg)
         return
     end
     
-    -- Calculate tokens to return
-    local tokensToReturn = (sharesToBurn * State.totalAssets) / State.totalShares
+    -- Calculate tokens to return using utils
+    local tokensToReturn = utils.calculateAssetsForShares(sharesToBurn, State.totalShares, State.totalAssets)
     
     -- Update state
     State.userShares[msg.From] = userShares - sharesToBurn
     State.totalShares = State.totalShares - sharesToBurn
     State.totalAssets = State.totalAssets - tokensToReturn
+    
+    -- Transfer tokens back to user
+    utils.sendTokens(config.VAULT.TOKEN_ID, msg.From, tostring(tokensToReturn), "Withdraw")
     
     -- Send confirmation
     ao.send({
@@ -120,12 +122,12 @@ local function withdrawHandler(msg)
         RemainingShares = tostring(State.userShares[msg.From])
     })
     
-    log("Withdrawal successful: " .. sharesToBurn .. " shares burned, " .. tokensToReturn .. " tokens returned")
+    utils.log("Withdrawal successful: " .. sharesToBurn .. " shares burned, " .. tokensToReturn .. " tokens returned")
 end
 
 -- Configuration handler
 local function configureHandler(msg)
-    log("Processing configuration from: " .. msg.From)
+    utils.log("Processing configuration from: " .. msg.From)
     
     local config = {
         riskTolerance = msg.Tags.RiskTolerance or "medium",
@@ -143,12 +145,12 @@ local function configureHandler(msg)
         Config = json.encode(config)
     })
     
-    log("Configuration updated for user: " .. msg.From)
+    utils.log("Configuration updated for user: " .. msg.From)
 end
 
 -- Query handler
 local function queryHandler(msg)
-    log("Processing query from: " .. msg.From)
+    utils.log("Processing query from: " .. msg.From)
     
     local userShares = State.userShares[msg.From] or 0
     local userValue = 0
@@ -171,12 +173,12 @@ local function queryHandler(msg)
         Data = json.encode(response)
     })
     
-    log("Query response sent to: " .. msg.From)
+    utils.log("Query response sent to: " .. msg.From)
 end
 
 -- Info handler for vault status
 local function infoHandler(msg)
-    log("Processing info request from: " .. msg.From)
+    utils.log("Processing info request from: " .. msg.From)
     
     local info = {
         version = State.version,
@@ -198,12 +200,12 @@ local function infoHandler(msg)
         Data = json.encode(info)
     })
     
-    log("Info response sent to: " .. msg.From)
+    utils.log("Info response sent to: " .. msg.From)
 end
 
 -- Yield scanning handler
 local function scanYieldsHandler(msg)
-    log("Processing yield scan request from: " .. msg.From)
+    utils.log("Processing yield scan request from: " .. msg.From)
     
     -- Initialize yield monitor if needed
     YieldMonitor.init()
@@ -219,12 +221,12 @@ local function scanYieldsHandler(msg)
         Data = json.encode(result)
     })
     
-    log("Yield scan completed: " .. result.success .. " successful, " .. result.errors .. " errors")
+    utils.log("Yield scan completed: " .. result.success .. " successful, " .. result.errors .. " errors")
 end
 
 -- Pool data update handler
 local function updatePoolDataHandler(msg)
-    log("Processing pool data update from: " .. msg.From)
+    utils.log("Processing pool data update from: " .. msg.From)
     
     local poolId = msg.Tags.PoolId
     if not poolId then
@@ -280,12 +282,12 @@ local function updatePoolDataHandler(msg)
         Data = json.encode(updatedPool)
     })
     
-    log("Pool data updated for: " .. poolId)
+    utils.log("Pool data updated for: " .. poolId)
 end
 
 -- Pool health check handler
 local function poolHealthHandler(msg)
-    log("Processing pool health check from: " .. msg.From)
+    utils.log("Processing pool health check from: " .. msg.From)
     
     -- Initialize yield monitor if needed
     YieldMonitor.init()
@@ -321,12 +323,12 @@ local function poolHealthHandler(msg)
         })
     end
     
-    log("Pool health check completed")
+    utils.log("Pool health check completed")
 end
 
 -- Yield monitor stats handler
 local function yieldStatsHandler(msg)
-    log("Processing yield stats request from: " .. msg.From)
+    utils.log("Processing yield stats request from: " .. msg.From)
     
     -- Initialize yield monitor if needed
     YieldMonitor.init()
@@ -343,7 +345,7 @@ local function yieldStatsHandler(msg)
         })
     })
     
-    log("Yield stats sent to: " .. msg.From)
+    utils.log("Yield stats sent to: " .. msg.From)
 end
 
 -- Expose Handlers for testing
@@ -422,11 +424,11 @@ Handlers.add(
 )
 
 -- Initialize process
-log("YAO Optimizer Vault Process initialized")
-log("Version: " .. State.version)
+utils.log("YAO Optimizer Vault Process initialized")
+utils.log("Version: " .. State.version)
 
 -- Initialize yield monitoring
 YieldMonitor.init()
-log("Yield monitoring system initialized")
+utils.log("Yield monitoring system initialized")
 
-log("Ready to accept deposits and manage autonomous yield optimization")
+utils.log("Ready to accept deposits and manage autonomous yield optimization")
