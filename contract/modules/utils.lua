@@ -1,4 +1,6 @@
 
+local config = require('config')
+
 local Utils = {}
 
 -- Logging utility
@@ -19,12 +21,19 @@ function Utils.sendTokens(token, recipient, quantity, note)
 end
 
 function Utils.returnTokens(msg, errMessage)
-    Utils.sendTokens(msg.From, msg.Sender, msg.Quantity, errMessage)
+    local qty = msg.Quantity or (msg.Tags and msg.Tags.Quantity) or "0"
+    local sender = msg.Sender or (msg.Tags and msg.Tags.Sender) or nil
+    Utils.sendTokens(msg.From, sender or "", qty, errMessage)
 end
 
 -- Address validation
 function Utils.validateAddress(address)
     return address and type(address) == "string" and #address > 0
+end
+
+-- Token helpers
+function Utils.isPaymentToken(token)
+    return config.VAULT.TOKEN_ID == token or false
 end
 
 -- Number validation and conversion

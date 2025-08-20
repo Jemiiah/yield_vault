@@ -12,17 +12,12 @@ State.init()
 local json = require('json')
 local YieldMonitor = require('modules.yield-monitor')
 
-local function isPaymentToken(token)
-    return config.VAULT.TOKEN_ID == token or false
-end
-
-
 -- Deposit handler
 local function depositHandler(msg)
     utils.log("Processing deposit from: " .. msg.From)
 
     -- Accept deposits only via Credit-Notice from the accepted token process
-    if isPaymentToken(msg.From) then
+    if utils.isPaymentToken(msg.From) then
         local amount = tonumber(msg.Tags.Quantity)
         if not amount or amount <= 0 then
             ao.send({
@@ -33,21 +28,34 @@ local function depositHandler(msg)
             return
         end
         
-        -- Calculate shares to mint using utils
-        local sharesToMint = utils.calculateSharesForDeposit(amount, State.totalShares, State.totalAssets)
+        -- Enforce minimum deposit
+        if amount < (config.VAULT.MIN_DEPOSIT or 0) then
+            ao.send({
+                Target = msg.Sender,
+                Action = "Deposit-Error",
+                Error = "Amount below minimum deposit"
+            })
+            return
+        end
         
-        -- Update state
-        State.userShares[msg.Sender] = (State.userShares[msg.Sender] or 0) + sharesToMint
-        State.totalShares = State.totalShares + sharesToMint
-        State.totalAssets = State.totalAssets + amount
+        -- Calculate shares to mint using utils
+        local s = State.get()
+        local sharesToMint = utils.calculateSharesForDeposit(amount, s.totalShares, s.totalAssets)
+        
+        -- Update state via State module
+        local state = State.get()
+        local currentUserShares = State.getUserShares(msg.Sender)
+        State.updateUserShares(msg.Sender, currentUserShares + sharesToMint)
+        State.updateTotals(state.totalShares + sharesToMint, state.totalAssets + amount)
         
         -- Send confirmation
+        local updated = State.get()
         ao.send({
             Target = msg.Sender,
             Action = "Deposit-Success",
             Amount = tostring(amount),
             Shares = tostring(sharesToMint),
-            TotalShares = tostring(State.totalShares)
+            TotalShares = tostring(updated.totalShares)
         })
         
         utils.log("Deposit successful: " .. amount .. " tokens, " .. sharesToMint .. " shares minted")
@@ -82,7 +90,8 @@ local function withdrawHandler(msg)
         return
     end
     
-    local userShares = State.userShares[msg.From] or 0
+    local state = State.get()
+    local userShares = State.getUserShares(msg.From)
     if sharesToBurn > userShares then
         ao.send({
             Target = msg.From,
@@ -93,23 +102,33 @@ local function withdrawHandler(msg)
     end
     
     -- Calculate tokens to return using utils
-    local tokensToReturn = utils.calculateAssetsForShares(sharesToBurn, State.totalShares, State.totalAssets)
+    local tokensToReturn = utils.calculateAssetsForShares(sharesToBurn, state.totalShares, state.totalAssets)
+
+    -- Enforce minimum withdrawal (by token amount)
+    if tokensToReturn < (config.VAULT.MIN_WITHDRAWAL or 0) then
+        ao.send({
+            Target = msg.From,
+            Action = "Withdraw-Error",
+            Error = "Amount below minimum withdrawal"
+        })
+        return
+    end
     
-    -- Update state
-    State.userShares[msg.From] = userShares - sharesToBurn
-    State.totalShares = State.totalShares - sharesToBurn
-    State.totalAssets = State.totalAssets - tokensToReturn
+    -- Update state via State module
+    State.updateUserShares(msg.From, userShares - sharesToBurn)
+    State.updateTotals(state.totalShares - sharesToBurn, state.totalAssets - tokensToReturn)
     
     -- Transfer tokens back to user
     utils.sendTokens(config.VAULT.TOKEN_ID, msg.From, tostring(tokensToReturn), "Withdraw")
     
     -- Send confirmation
+    local remainingShares = State.getUserShares(msg.From)
     ao.send({
         Target = msg.From,
         Action = "Withdraw-Success",
         Shares = tostring(sharesToBurn),
         Amount = tostring(tokensToReturn),
-        RemainingShares = tostring(State.userShares[msg.From])
+        RemainingShares = tostring(remainingShares)
     })
     
     utils.log("Withdrawal successful: " .. sharesToBurn .. " shares burned, " .. tokensToReturn .. " tokens returned")
@@ -127,7 +146,7 @@ local function configureHandler(msg)
         approvalRequired = msg.Tags.ApprovalRequired == "true"
     }
     
-    State.userConfigs[msg.From] = config
+    State.setUserConfig(msg.From, config)
     
     ao.send({
         Target = msg.From,
@@ -142,19 +161,20 @@ end
 local function queryHandler(msg)
     utils.log("Processing query from: " .. msg.From)
     
-    local userShares = State.userShares[msg.From] or 0
+    local userShares = State.getUserShares(msg.From) or 0
     local userValue = 0
     
-    if State.totalShares > 0 then
-        userValue = (userShares * State.totalAssets) / State.totalShares
+    local s = State.get()
+    if s.totalShares > 0 then
+        userValue = (userShares * s.totalAssets) / s.totalShares
     end
     
     local response = {
         shares = userShares,
         value = userValue,
-        totalVaultShares = State.totalShares,
-        totalVaultAssets = State.totalAssets,
-        config = State.userConfigs[msg.From] or {}
+        totalVaultShares = s.totalShares,
+        totalVaultAssets = s.totalAssets,
+        config = State.getUserConfig(msg.From) or {}
     }
     
     ao.send({
@@ -170,17 +190,19 @@ end
 local function infoHandler(msg)
     utils.log("Processing info request from: " .. msg.From)
     
+    local s = State.get()
     local info = {
-        version = State.version,
-        totalShares = State.totalShares,
-        totalAssets = State.totalAssets,
+        version = s.version,
+        totalShares = s.totalShares,
+        totalAssets = s.totalAssets,
         userCount = 0,
-        emergencyMode = State.emergencyMode,
-        lastRebalance = State.lastRebalance
+        emergencyMode = s.emergencyMode,
+        lastRebalance = s.lastRebalance
     }
     
     -- Count users
-    for _ in pairs(State.userShares) do
+    local state = State.get()
+    for _ in pairs(state.userShares) do
         info.userCount = info.userCount + 1
     end
     
@@ -415,7 +437,7 @@ Handlers.add(
 
 -- Initialize process
 utils.log("YAO Optimizer Vault Process initialized")
-utils.log("Version: " .. State.version)
+utils.log("Version: " .. State.get().version)
 
 -- Initialize yield monitoring
 YieldMonitor.init()
