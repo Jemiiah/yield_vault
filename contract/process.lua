@@ -3,20 +3,10 @@
 
 local config = require('config')
 local utils = require('modules.utils')
+local State = require('modules.state')
 
--- Initialize global state
-if not State then
-    State = {
-        totalShares = 0,
-        totalAssets = 0,
-        userShares = {},
-        poolAllocations = {},
-        userConfigs = {},
-        lastRebalance = 0,
-        emergencyMode = false,
-        version = "0.1.0"
-    }
-end
+-- Initialize global state (centralized)
+State.init()
 
 -- Load modules
 local json = require('json')
