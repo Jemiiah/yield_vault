@@ -4,6 +4,7 @@
 local config = require('config')
 local utils = require('modules.utils')
 local State = require('modules.state')
+local aoUtils = require('modules.ao-utils')
 
 -- Initialize global state (centralized)
 State.init()
@@ -28,8 +29,9 @@ local function depositHandler(msg)
             return
         end
         
-        -- Enforce minimum deposit
+        -- Enforce minimum deposit: refund and notify
         if amount < (config.VAULT.MIN_DEPOSIT or 0) then
+            utils.returnTokens(msg, "Amount below minimum deposit")
             ao.send({
                 Target = msg.Sender,
                 Action = "Deposit-Error",
@@ -373,66 +375,59 @@ ProcessHandlers = {
     yieldStatsHandler = yieldStatsHandler
 }
 
--- Main message handler
-Handlers.add(
-    "Deposit",
-    Handlers.utils.hasMatchingTag("Action", "Deposit"),
-    depositHandler
-)
-
 Handlers.add(
     "creditNotice",
     Handlers.utils.hasMatchingTag("Action", "Credit-Notice"),
-    depositHandler
+    aoUtils.wrapHandler(depositHandler)
 )
 
 Handlers.add(
     "Withdraw", 
     Handlers.utils.hasMatchingTag("Action", "Withdraw"),
-    withdrawHandler
+    aoUtils.wrapHandler(withdrawHandler)
 )
 
 Handlers.add(
     "Configure",
     Handlers.utils.hasMatchingTag("Action", "Configure"), 
-    configureHandler
+    aoUtils.wrapHandler(configureHandler)
 )
 
 Handlers.add(
     "Query",
     Handlers.utils.hasMatchingTag("Action", "Query"),
-    queryHandler
+    aoUtils.wrapHandler(queryHandler)
 )
 
 Handlers.add(
     "Info",
     Handlers.utils.hasMatchingTag("Action", "Info"),
-    infoHandler
+    aoUtils.wrapHandler(infoHandler)
 )
 
 -- Yield monitoring handlers
 Handlers.add(
     "ScanYields",
     Handlers.utils.hasMatchingTag("Action", "Scan-Yields"),
-    scanYieldsHandler
+    aoUtils.wrapHandler(scanYieldsHandler)
 )
 
 Handlers.add(
     "UpdatePoolData",
     Handlers.utils.hasMatchingTag("Action", "Update-Pool"),
-    updatePoolDataHandler
+    aoUtils.wrapHandler(updatePoolDataHandler)
 )
 
 Handlers.add(
     "PoolHealth",
     Handlers.utils.hasMatchingTag("Action", "Pool-Health"),
-    poolHealthHandler
+    aoUtils.wrapHandler(poolHealthHandler)
 )
 
 Handlers.add(
     "YieldStats",
     Handlers.utils.hasMatchingTag("Action", "Yield-Stats"),
-    yieldStatsHandler
+    aoUtils.wrapHandler(yieldStatsHandler)
 )
 
 -- Initialize process
