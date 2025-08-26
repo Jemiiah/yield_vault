@@ -1,14 +1,15 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { getTokenInfo } from "../helpers/token";
 import dashboard_grid from "../../public/graph_main_stra.svg";
 import dashboard_grid_dark from "../../public/background_grid_dark.svg";
 import yao_text from "../../public/YAO.svg";
 import yao_text_white from "../../public/yao_text_white.svg";
 import { useTheme } from "../hooks/useTheme";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import ao_logo from "../../public/ao_logo.svg";
 // import stEth from "../../public/stETH 2.svg";
 // import dai from "../../public/DAI 1.svg";
@@ -44,6 +45,60 @@ export default function Dashboard() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loadingPools, setLoadingPools] = useState(false);
   const [poolsError, setPoolsError] = useState<string | null>(null);
+
+  // State for token logos
+  const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
+  const [logoLoading, setLogoLoading] = useState<Set<string>>(new Set());
+
+  // Function to fetch token logo
+  const fetchTokenLogo = useCallback(async (tokenId: string) => {
+    if (!tokenId || tokenLogos[tokenId] || logoLoading.has(tokenId)) return;
+
+    setLogoLoading(prev => new Set(prev).add(tokenId));
+
+    try {
+      const tokenInfo = await getTokenInfo(tokenId);
+      setTokenLogos(prev => ({
+        ...prev,
+        [tokenId]: tokenInfo.logo
+      }));
+    } catch (error) {
+      console.error(`Failed to fetch logo for token ${tokenId}:`, error);
+      // Use fallback logo on error
+      setTokenLogos(prev => ({
+        ...prev,
+        [tokenId]: ao_logo
+      }));
+    } finally {
+      setLogoLoading(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tokenId);
+        return newSet;
+      });
+    }
+  }, [tokenLogos, logoLoading]);
+
+  // Fetch logos for all tokens when pools data is available
+  useEffect(() => {
+    if (pools.length > 0) {
+      const tokenIds = new Set<string>();
+
+      pools.forEach(pool => {
+        if (pool.token0) tokenIds.add(pool.token0);
+        if (pool.token1) tokenIds.add(pool.token1);
+      });
+
+      tokenIds.forEach(tokenId => {
+        fetchTokenLogo(tokenId);
+      });
+    }
+  }, [pools, fetchTokenLogo]);
+
+  // Helper function to get token logo with fallback
+  const getTokenLogo = useCallback((tokenId?: string): string => {
+    if (!tokenId) return ao_logo;
+    return tokenLogos[tokenId] || ao_logo;
+  }, [tokenLogos]);
 
   const isStableToken = useMemo(
     () =>
@@ -247,7 +302,8 @@ export default function Dashboard() {
             `${p.token0_ticker || p.token0_name}/${
               p.token1_ticker || p.token1_name
             }`,
-          token_icon: ao_logo,
+          token_icon: getTokenLogo(p.token0), 
+          token_icon2: getTokenLogo(p.token1), 
           verified: verified,
           protocol:
             (p.amm_name && String(p.amm_name).split(" ")[0]) || "Botega",
@@ -271,7 +327,7 @@ export default function Dashboard() {
         if (a.riskScore !== b.riskScore) return b.riskScore - a.riskScore;
         return Number(b.apy.replace("%", "")) - Number(a.apy.replace("%", ""));
       }),
-    [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk]
+    [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk, getTokenLogo]
   );
 
   const dynamicTokenCards = useMemo(() => {
@@ -287,7 +343,8 @@ export default function Dashboard() {
 
         return {
           symbol: pool.amm_name?.split(" ")[2],
-          logo: ao_logo, // Default logo, could be made dynamic
+          logo: getTokenLogo(pool.token0),
+          logo2: getTokenLogo(pool.token1),
           value: fmtUSD(Number(pool.token1_current_price || 0)),
           apy: fmtPct(apyPct),
           protocol: pool.amm_name?.split(" ")[0],
@@ -311,7 +368,7 @@ export default function Dashboard() {
         );
       })
       .slice(0, 4);
-  }, [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk, isGameToken]);
+  }, [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk, isGameToken, getTokenLogo]);
 
   const displayTokenCards = useMemo(() => {
     return dynamicTokenCards;
@@ -427,11 +484,18 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-2">
                     <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
+                      <div className="flex">
                       <img
                         src={token?.logo}
                         alt={token?.symbol}
-                        className=" "
+                          className="w-5 h-5 rounded-full"
+                        />
+                        <img
+                          src={token?.logo2}
+                          alt={token?.symbol}
+                          className="w-5 h-5 rounded-full -translate-x-2"
                       />
+                    </div>
                     </div>
 
                     <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
@@ -609,7 +673,7 @@ export default function Dashboard() {
                           </span>
                           <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
                             <img
-                              src={strategy.token_icon}
+                              src={strategy.token_icon2}
                               alt={strategy.name}
                               className=" "
                             />
