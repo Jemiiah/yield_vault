@@ -7,6 +7,7 @@ import Strategy from "./components/Strategy";
 import YaoBot from "./components/dashboard/yao_bot";
 
 function App() {
+
   return (
     <ThemeProvider>
       <Router>
@@ -22,7 +23,6 @@ function App() {
               <Route path="/strategy/:id" element={<Strategy />} />
             </Routes>
           </main>
-
           <YaoBot />
         </div>
       </Router>
