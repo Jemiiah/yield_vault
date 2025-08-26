@@ -510,10 +510,10 @@ export default function Dashboard() {
 
                   <div className="flex flex-col items-end justify-end font-semibold">
                     <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
-                      tvl {token?.tvl}
+                      {token?.tvl}
                     </div>
                     <div className="text-[#7e868c] text-sm">
-                      {token?.market_cap} mc
+                      {token?.market_cap}
                     </div>
                   </div>
                 </div>
