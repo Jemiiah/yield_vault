@@ -6,6 +6,7 @@ import Strategy from "./components/Strategy";
 import YaoChatbot from "./components/chatbot/YaoChatbot";
 
 function App() {
+
   return (
     <Router>
       <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#0F1419] relative overflow-hidden transition-colors duration-300">

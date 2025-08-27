@@ -1,319 +1,401 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
+import { getTokenInfo } from "../helpers/token";
 import dashboard_grid from "../../public/graph_main_stra.svg";
 import dashboard_grid_dark from "../../public/background_grid_dark.svg";
 import yao_text from "../../public/YAO.svg";
 import yao_text_white from "../../public/yao_text_white.svg";
 import { useTheme } from "../hooks/useTheme";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 import ao_logo from "../../public/ao_logo.svg";
-import stEth from "../../public/stETH 2.svg";
-import dai from "../../public/DAI 1.svg";
+// import stEth from "../../public/stETH 2.svg";
+// import dai from "../../public/DAI 1.svg";
 import help_circle from "../../public/help-circle.svg";
 import filter from "../../public/filter.svg";
 import user_circle from "../../public/user-circle.svg";
 import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
-const tokenCards = [
-  {
-    symbol: "AR",
-    logo: ao_logo,
-    amount: "1",
-    value: "$4.7",
-    apy: "4.56%",
-    protocol: "AO airdrop",
-    aoAmount: "0.016",
-    aoValue: "$0.214",
-  },
-  {
-    symbol: "ETH",
-    logo: stEth,
-    amount: "1",
-    value: "$3,700",
-    apy: "4.56%",
-    protocol: "AO pre-bridge",
-    aoAmount: "0.016",
-    aoValue: "$0.214",
-  },
-  {
-    symbol: "DAI",
-    logo: dai,
-    amount: "1",
-    value: "$1.00",
-    apy: "4.56%",
-    protocol: "AO pre-bridge",
-    aoAmount: "0.016",
-    aoValue: "$0.214",
-  },
-  {
-    symbol: "USDS",
-    logo: dai,
-    amount: "1",
-    value: "$1.00",
-    apy: "4.56%",
-    protocol: "AO pre-bridge",
-    aoAmount: "0.016",
-    aoValue: "$0.214",
-  },
-];
+// Minimal pool type used by the UI
+interface Pool {
+  amm_name?: string;
+  amm_process?: string;
+  token0?: string;
+  token1?: string;
+  token0_ticker?: string;
+  token1_ticker?: string;
+  token0_name?: string;
+  token1_name?: string;
+  pool_fee_bps?: number;
+  volume_usd?: number;
+  liquidity_usd?: number;
+  market_cap?: number;
+  token0_current_price?: number;
+  token1_current_price?: number;
+}
 
-const strategies = [
-  {
-    id: "yao-ai-1",
-    name: "YAO AI",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "-1.75%",
-    apyColor: "text-red-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "yao-ai-2",
-    name: "YAO AI",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: [],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "yao-ai-3",
-    name: "YAO AI",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "yao-ai-4",
-    name: "YAO AI",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: [],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  // Ekubo strategies
-  {
-    id: "ekubo-1",
-    name: "Ekubo xYAO/YAO",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    isEkubo: true,
-  },
-  {
-    id: "ekubo-2",
-    name: "Ekubo xYAO/YAO",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    isEkubo: true,
-  },
-  {
-    id: "ekubo-3",
-    name: "Ekubo xYAO/YAO",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    isEkubo: true,
-  },
-  {
-    id: "ekubo-4",
-    name: "Ekubo xYAO/YAO",
-    token_icon: user_circle,
-    verified: verified,
-    protocol: "YAO",
-    protocol_icon: user_circle,
-    apy: "—",
-    apyColor: "text-gray-400",
-    risk: "—",
-    tvl: "—",
-    badges: [],
-    points: "",
-    isEkubo: true,
-  },
-];
-
-const findYieldsStrategies = [
-  {
-    id: "ao-war",
-    name: "AO/wAR",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "Botega",
-    apy: "-1.75%",
-    apyColor: "text-red-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "ao-wusdc-1",
-    name: "AO/wUSDC",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "Permaswap",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: [],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "ao-wusdc-2",
-    name: "AO/wUSDC",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "Botega",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "war",
-    name: "wAR",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "LiquidOps",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: [],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "wusdc",
-    name: "wUSDC",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "LiquidOps",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "wusdt",
-    name: "wUSDT",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "LiquidOps",
-    apy: "-1.75%",
-    apyColor: "text-red-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "weth",
-    name: "wETH",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "LiquidOps",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-  {
-    id: "war-ao",
-    name: "wAR/AO",
-    token_icon: ao_logo,
-    verified: verified,
-    protocol_icon: user_circle,
-    protocol: "Botega",
-    apy: "9.91%",
-    apyColor: "text-blue-500",
-    risk: "low",
-    tvl: "$29,286",
-    badges: ["Hot & New"],
-    points: "1x Points",
-    isEkubo: false,
-  },
-];
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("strategies");
   // const [currentPage, setCurrentPage] = useState(1);
   const theme = useTheme();
-  const currentStrategies =
-    activeTab === "strategies" ? strategies : findYieldsStrategies;
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [loadingPools, setLoadingPools] = useState(false);
+  const [poolsError, setPoolsError] = useState<string | null>(null);
+
+  // State for token logos
+  const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
+  const [logoLoading, setLogoLoading] = useState<Set<string>>(new Set());
+
+  // Function to fetch token logo
+  const fetchTokenLogo = useCallback(
+    async (tokenId: string) => {
+      if (!tokenId || tokenLogos[tokenId] || logoLoading.has(tokenId)) return;
+
+      setLogoLoading((prev) => new Set(prev).add(tokenId));
+
+      try {
+        const tokenInfo = await getTokenInfo(tokenId);
+        setTokenLogos((prev) => ({
+          ...prev,
+          [tokenId]: tokenInfo.logo,
+        }));
+      } catch (error) {
+        console.error(`Failed to fetch logo for token ${tokenId}:`, error);
+        // Use fallback logo on error
+        setTokenLogos((prev) => ({
+          ...prev,
+          [tokenId]: ao_logo,
+        }));
+      } finally {
+        setLogoLoading((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(tokenId);
+          return newSet;
+        });
+      }
+    },
+    [tokenLogos, logoLoading]
+  );
+
+  // Fetch logos for all tokens when pools data is available
+  useEffect(() => {
+    if (pools.length > 0) {
+      const tokenIds = new Set<string>();
+
+      pools.forEach((pool) => {
+        if (pool.token0) tokenIds.add(pool.token0);
+        if (pool.token1) tokenIds.add(pool.token1);
+      });
+
+      tokenIds.forEach((tokenId) => {
+        fetchTokenLogo(tokenId);
+      });
+    }
+  }, [pools, fetchTokenLogo]);
+
+  // Helper function to get token logo with fallback
+  const getTokenLogo = useCallback(
+    (tokenId?: string): string => {
+      if (!tokenId) return ao_logo;
+      return tokenLogos[tokenId] || ao_logo;
+    },
+    [tokenLogos]
+  );
+
+  const isStableToken = useMemo(
+    () =>
+      (ticker?: string, name?: string): boolean => {
+        if (!ticker && !name) return false;
+        const tokenStr = `${ticker || ""} ${name || ""}`.toLowerCase();
+        return (
+          tokenStr.includes("usd") ||
+          tokenStr.includes("dai") ||
+          tokenStr.includes("usdt") ||
+          tokenStr.includes("usdc")
+        );
+      },
+    []
+  );
+
+  const isAOToken = useMemo(
+    () =>
+      (ticker?: string, name?: string): boolean => {
+        if (!ticker && !name) return false;
+        const tokenStr = `${ticker || ""} ${name || ""}`.toLowerCase();
+        return tokenStr.includes("ao") || tokenStr.includes("war");
+      },
+    []
+  );
+
+  const isGameToken = useMemo(
+    () =>
+      (ticker?: string, name?: string): boolean => {
+        if (!ticker && !name) return false;
+        const tokenStr = `${ticker || ""} ${name || ""}`.toLowerCase();
+        return tokenStr.includes("game") || Boolean(name?.includes("Game"));
+      },
+    []
+  );
+
+  const calculateRisk = useMemo(
+    () =>
+      (pool: Pool): { risk: "low" | "medium" | "high"; score: number } => {
+        const token0Stable = isStableToken(
+          pool.token0_ticker,
+          pool.token0_name
+        );
+        const token1Stable = isStableToken(
+          pool.token1_ticker,
+          pool.token1_name
+        );
+        const token0AO = isAOToken(pool.token0_ticker, pool.token0_name);
+        const token1AO = isAOToken(pool.token1_ticker, pool.token1_name);
+        const token0Game = isGameToken(pool.token0_ticker, pool.token0_name);
+        const token1Game = isGameToken(pool.token1_ticker, pool.token1_name);
+
+        if (
+          (token0Stable && token1AO) ||
+          (token1Stable && token0AO) ||
+          token0Game ||
+          token1Game ||
+          (token0Stable && token1Stable)
+        ) {
+          return { risk: "low", score: 80 };
+        }
+
+        if ((token0Stable || token1Stable) && (token0AO || token1AO)) {
+          return { risk: "low", score: 60 };
+        }
+
+        if (token0Stable || token1Stable) {
+          return { risk: "medium", score: 40 };
+        }
+
+        // Default high risk
+        return { risk: "high", score: 20 };
+      },
+    [isStableToken, isAOToken, isGameToken]
+  );
+
+  const fetchPools = useCallback(async (signal: AbortSignal) => {
+    const API_BASE = "http://localhost:3000";
+    const url = `${API_BASE}/pools`;
+
+    const response = await fetch(url, { signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json().catch(() => null);
+    if (data == null) {
+      const txt = await response.text();
+      try {
+        const parsed = JSON.parse(txt);
+        return parsed;
+      } catch {
+        throw new Error("Bad payload");
+      }
+    }
+    return data;
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadingPools(true);
+    setPoolsError(null);
+
+    fetchPools(controller.signal)
+      .then((data: unknown) => {
+        type WithItems = { items?: unknown };
+        let arr: Pool[] = [];
+        if (Array.isArray(data)) {
+          arr = data as Pool[];
+        } else if (
+          data &&
+          typeof data === "object" &&
+          Array.isArray((data as WithItems).items)
+        ) {
+          arr = (data as { items: Pool[] }).items;
+        }
+        setPools(arr);
+      })
+      .catch((e) => {
+        if (e.name === "AbortError") return;
+        setPoolsError("Failed to load pools");
+      })
+      .finally(() => {
+        setLoadingPools(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchPools]);
+
+  const deriveApyPct = useMemo(
+    () =>
+      (pool: Pool): number => {
+        const vol = Number(pool?.volume_usd) || 0;
+        const liq = Number(pool?.liquidity_usd) || 0;
+        const feeBps = Number(pool?.pool_fee_bps) || 0;
+        if (!liq || !feeBps) return 0;
+        const feeRate = feeBps / 10000; // e.g., 25 bps => 0.0025
+        const daily = (vol / liq) * feeRate; // daily yield estimate
+        const annual = daily * 365;
+        return Math.max(0, annual) * 100; // percent
+      },
+    []
+  );
+
+  const fmtPct = useMemo(
+    () =>
+      (v: number): string =>
+        `${v.toFixed(2)}%`,
+    []
+  );
+
+  const fmtUSD = useMemo(
+    () =>
+      (v: number): string =>
+        v >= 1_000_000
+          ? `$${(v / 1_000_000).toFixed(2)}m`
+          : v >= 1_000
+          ? `$${(v / 1_000).toFixed(2)}k`
+          : `$${v.toFixed(2)}`,
+    []
+  );
+
+  // Function to generate risk bars based on risk score
+  const generateRiskBars = useMemo(
+    () => (riskScore: number) => {
+      const totalBars = 5;
+      const filledBars = Math.round((riskScore / 100) * totalBars);
+      const bars = [];
+
+      // Determine color based on number of filled bars
+      const getBarColor = (isFilled: boolean) => {
+        if (!isFilled) return "bg-gray-200";
+
+        if (filledBars === 1) return "bg-red-500";
+        if (filledBars === 2) return "bg-yellow-500";
+        if (filledBars >= 3) return "bg-green-500";
+
+        return "bg-gray-200";
+      };
+
+      for (let i = 0; i < totalBars; i++) {
+        const isFilled = i < filledBars;
+        bars.push(
+          <div
+            key={i}
+            className={`w-1 h-7 rounded-sm ${getBarColor(isFilled)}`}
+          />
+        );
+      }
+
+      return bars;
+    },
+    []
+  );
+
+  const fetchedStrategies = useMemo(
+    () =>
+      pools
+        .map((p) => {
+          const apyPct = deriveApyPct(p);
+          const risk = calculateRisk(p);
+          return {
+            id:
+              p.amm_process ||
+              `${p.token0_ticker || ""}-${p.token1_ticker || ""}`,
+            name:
+              p.amm_name ||
+              `${p.token0_ticker || p.token0_name}/${
+                p.token1_ticker || p.token1_name
+              }`,
+            token_icon: getTokenLogo(p.token0),
+            token_icon2: getTokenLogo(p.token1),
+            verified: verified,
+            protocol:
+              (p.amm_name && String(p.amm_name).split(" ")[0]) || "Botega",
+            protocol_icon: user_circle,
+            apy: fmtPct(apyPct),
+            apyColor: apyPct >= 0 ? "text-blue-500" : "text-red-500",
+            risk: risk.risk,
+            riskScore: risk.score,
+            tvl: fmtUSD(Number(p.liquidity_usd) || 0),
+            badges: [],
+            points: "",
+            isStrategy: false,
+          };
+        })
+        .filter((strategy) => {
+          const apyNum = Number(strategy.apy.replace("%", ""));
+          return apyNum > 0;
+        })
+        .sort((a, b) => {
+          // Sort by risk score first (higher = safer), then by APY
+          if (a.riskScore !== b.riskScore) return b.riskScore - a.riskScore;
+          return (
+            Number(b.apy.replace("%", "")) - Number(a.apy.replace("%", ""))
+          );
+        }),
+    [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk, getTokenLogo]
+  );
+
+  const dynamicTokenCards = useMemo(() => {
+    return pools
+      .map((pool) => {
+        const apyPct = deriveApyPct(pool);
+        const risk = calculateRisk(pool);
+        const isGame =
+          isGameToken(pool.token0_ticker, pool.token0_name) ||
+          isGameToken(pool.token1_ticker, pool.token1_name);
+
+        if (apyPct <= 0) return null;
+
+        return {
+          symbol: pool.amm_name?.split(" ")[2],
+          logo: getTokenLogo(pool.token0),
+          logo2: getTokenLogo(pool.token1),
+          value: fmtUSD(Number(pool.token1_current_price || 0)),
+          apy: fmtPct(apyPct),
+          protocol: pool.amm_name?.split(" ")[0],
+          volume: fmtUSD(Number(pool.volume_usd) || 0),
+          market_cap: fmtUSD(Number(pool.market_cap) || 0),
+          tvl: fmtUSD(Number(pool.liquidity_usd) || 0),
+          risk: risk.risk,
+          riskScore: risk.score,
+          isGame: isGame,
+          pool: pool,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        // Prioritize by risk score first (higher = safer), then game tokens, then APY
+        if (a!.riskScore !== b!.riskScore) return b!.riskScore - a!.riskScore;
+        if (a!.isGame && !b!.isGame) return -1;
+        if (!a!.isGame && b!.isGame) return 1;
+        return (
+          Number(b!.apy.replace("%", "")) - Number(a!.apy.replace("%", ""))
+        );
+      })
+      .slice(0, 4);
+  }, [
+    pools,
+    deriveApyPct,
+    fmtPct,
+    fmtUSD,
+    calculateRisk,
+    isGameToken,
+    getTokenLogo,
+  ]);
+
+  const displayTokenCards = useMemo(() => {
+    return dynamicTokenCards;
+  }, [dynamicTokenCards]);
 
   return (
     <div className="min-h-screen bg-[#f8f7f4] dark:bg-[#0F1419]">
@@ -415,8 +497,8 @@ export default function Dashboard() {
         </div>
 
         {/* Token Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-          {tokenCards.map((token, index) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {displayTokenCards.map((token, index) => (
             <Card
               key={index}
               className="bg-white/80 gradient-card w-full border-none"
@@ -424,36 +506,47 @@ export default function Dashboard() {
               <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
-                      <img src={token.logo} alt={token.symbol} className="" />
+                    <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
+                      <div className="flex">
+                        <img
+                          src={token?.logo}
+                          alt={token?.symbol}
+                          className="w-5 h-5 rounded-full"
+                        />
+                        <img
+                          src={token?.logo2}
+                          alt={token?.symbol}
+                          className="w-5 h-5 rounded-full -translate-x-2"
+                        />
+                      </div>
                     </div>
 
                     <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
-                      <span className="text-sm sm:text-base">
-                        {token.amount} {token.symbol}
+                      <span className="text-base">
+                        {/* {token?.amount} */} {token?.symbol}
                       </span>
-                      <span className="text-[#7e868c] text-xs sm:text-sm">
-                        {token.value}
+                      <span className="text-[#7e868c] text-sm">
+                        {token?.value}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex flex-col items-end justify-end font-semibold">
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-sm sm:text-base">
-                      {token.aoAmount} APY
+                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
+                      {token?.tvl}
                     </div>
-                    <div className="text-[#7e868c] text-xs sm:text-sm">
-                      {token.aoValue}
+                    <div className="text-[#7e868c] text-sm">
+                      {token?.market_cap}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
                   <div className="text-[#7e868c] text-xs font-semibold">
-                    {token.protocol}
+                    {token?.protocol}
                   </div>
                   <div className="text-[#7e868c] text-xs font-semibold">
-                    <span className="text-[#5CAB28]">{token.apy}</span> APY
+                    <span className="text-[#5CAB28]">{token?.apy}</span> APY
                   </div>
                 </div>
               </CardContent>
@@ -520,6 +613,14 @@ export default function Dashboard() {
         <div className="hidden lg:block">
           <Card className="bg-none border-none px-0">
             <CardContent className="p-0">
+              <div className="px-4 py-2 text-sm">
+                {loadingPools && (
+                  <span className="text-[#7e868c]">Loading pools…</span>
+                )}
+                {!loadingPools && poolsError && (
+                  <span className="text-red-500">{poolsError}</span>
+                )}
+              </div>
               {/* Table Header */}
               <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
                 <div className="col-span-3">STRATEGY NAME</div>
@@ -530,147 +631,187 @@ export default function Dashboard() {
               </div>
 
               {/* Strategy Rows */}
-              {currentStrategies.map((strategy, index) => (
-                <Link key={index} to={`/strategy/${strategy.id}`}>
-                  <div
-                    className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
-                  >
-                    {strategy.isEkubo && (
-                      <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
-                    )}
-
-                    <div className="flex space-x-3 col-span-3">
-                      <div className=" flex">
-                        <span className="w-8 h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                          <img
-                            src={strategy.token_icon}
-                            alt={strategy.name}
-                            className=""
-                          />
-                        </span>
-                        <span className="w-8 h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
-                          <img
-                            src={strategy.token_icon}
-                            alt={strategy.name}
-                            className=" "
-                          />
-                        </span>
+              {loadingPools
+                ? Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] dark:bg-[#141C22]"
+                    >
+                      {/* Strategy Name Column */}
+                      <div className="flex space-x-3 col-span-3">
+                        <div className="flex">
+                          <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse"></div>
+                          <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse -translate-x-2"></div>
+                        </div>
+                        <div className="flex flex-col space-y-2">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
-                          <span>{strategy.name}</span>
-                          {strategy.badges.map((badge, i) => (
+
+                      {/* APY Column */}
+                      <div className="text-center flex items-center justify-center">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-12"></div>
+                      </div>
+
+                      {/* Risk Column */}
+                      <div className="text-center flex justify-center">
+                        <div className="flex space-x-1.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
                             <div
                               key={i}
-                              className="flex items-center space-x-2"
-                            >
-                              <span className="w-8 h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                                <img
-                                  src={strategy.verified}
-                                  alt={strategy.name}
-                                  className=""
-                                />
-                              </span>
-
-                              <Badge
-                                variant="secondary"
-                                className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
-                              >
-                                {badge}
-                              </Badge>
-                            </div>
+                              className="w-1 h-7 bg-gray-200 dark:bg-gray-700 rounded-sm animate-pulse"
+                            ></div>
                           ))}
                         </div>
+                      </div>
 
-                        <div className=" flex items-center space-x-1">
-                          <img
-                            src={strategy.protocol_icon}
-                            alt={strategy.name}
-                            className="w-4 h-4"
-                          />
-                          <span className="text-[#808c7e] text-sm">
-                            {strategy.protocol}
-                          </span>
-                        </div>
+                      {/* TVL Column */}
+                      <div className="text-center flex items-center justify-center">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                      </div>
+
+                      {/* Info Column */}
+                      <div className="text-center flex justify-center">
+                        <div className="w-4 h-4 md:w-10 md:h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                       </div>
                     </div>
-                    <div className="text-center space-y-1">
-                      {strategy.isEkubo ? (
-                        <div
-                          className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
-                        >
-                          {strategy.apy}
-                        </div>
-                      ) : (
-                        <div className={`font-medium ${strategy.apyColor}`}>
-                          {strategy.apy}
-                        </div>
-                      )}
+                  ))
+                : fetchedStrategies.map((strategy, index) => (
+                    <Link key={index} to={`/strategy/${strategy.id}`}>
+                      <div
+                        className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
+                      >
+                        {/* {strategy.isStrategy && (
+                    <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
+                  )} */}
 
-                      <div className="">
-                        {strategy.isEkubo ? (
-                          <div></div>
-                        ) : (
-                          <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
-                            <span>{strategy.points}</span>
-
-                            <span>
-                              <img src={user_circle} alt={strategy.name} />
+                        <div className="flex space-x-3 col-span-3">
+                          <div className=" flex">
+                            <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                              <img
+                                src={strategy.token_icon}
+                                alt={strategy.name}
+                                className=""
+                              />
+                            </span>
+                            <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
+                              <img
+                                src={strategy.token_icon2}
+                                alt={strategy.name}
+                                className=" "
+                              />
                             </span>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      {strategy.isEkubo ? (
-                        <div className="flex justify-center space-x-2">
-                          <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                            —
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-center">
-                          <div className="flex space-x-1.5">
-                            <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
-                            <div className="w-1 h-7 bg-[#69C02F] rounded-sm"></div>
-                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
-                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
-                            <div className="w-1 h-7 bg-gray-200 rounded-sm"></div>
+                          <div className="space-y-1">
+                            <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
+                              <span>{strategy.name}</span>
+                              {strategy.badges.map((badge, i) => (
+                                <div className="flex items-center space-x-2">
+                                  <span className="w-4 h-4 md:w-8 md:h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                                    <img
+                                      src={strategy.verified}
+                                      alt={strategy.name}
+                                      className=""
+                                    />
+                                  </span>
+
+                                  <Badge
+                                    key={i}
+                                    variant="secondary"
+                                    className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
+                                  >
+                                    {badge}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className=" flex items-center space-x-1">
+                              <img
+                                src={strategy.protocol_icon}
+                                alt={strategy.name}
+                                className="w-4 h-4"
+                              />
+                              <span className="text-[#808c7e] text-sm">
+                                {strategy.protocol}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      )}
-                    </div>
+                        <div className="text-center space-y-1">
+                          {strategy.isStrategy ? (
+                            <div
+                              className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
+                            >
+                              {strategy.apy}
+                            </div>
+                          ) : (
+                            <div className={`font-medium ${strategy.apyColor}`}>
+                              {strategy.apy}
+                            </div>
+                          )}
 
-                    <div className="">
-                      {strategy.isEkubo ? (
-                        <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                          {strategy.tvl}
-                        </div>
-                      ) : (
-                        <div className="text-center font-medium text-[#565E64] ">
-                          {strategy.tvl}
-                        </div>
-                      )}
-                    </div>
+                          <div className="">
+                            {strategy.isStrategy ? (
+                              <div></div>
+                            ) : (
+                              <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
+                                <span>{strategy.points}</span>
 
-                    <div className="text-center ">
-                      <button className="p-1.5 hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                        <img src={help_circle} alt={strategy.name} />
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                                <span>
+                                  <img src={user_circle} alt={strategy.name} />
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          {strategy.isStrategy ? (
+                            <div className="flex justify-center space-x-2">
+                              <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                                —
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-center">
+                              <div className="flex space-x-1.5">
+                                {generateRiskBars(strategy.riskScore || 60)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="">
+                          {strategy.isStrategy ? (
+                            <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                              {strategy.tvl}
+                            </div>
+                          ) : (
+                            <div className="text-center font-medium text-[#565E64] ">
+                              {strategy.tvl}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-center ">
+                          <button className="p-1.5 hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                            <img src={help_circle} alt={strategy.name} />
+                          </button>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
             </CardContent>
           </Card>
         </div>
 
         {/* Mobile/Tablet Card View */}
         <div className="lg:hidden space-y-3 sm:space-y-4 relative">
-          {currentStrategies.map((strategy, index) => (
+          {fetchedStrategies.map((strategy, index) => (
             <Link key={index} to={`/strategy/${strategy.id}`}>
               <div className="relative">
-                {strategy.isEkubo && (
+                {strategy.isStrategy && (
                   <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none rounded-lg"></div>
                 )}
                 <Card className="bg-white dark:bg-[#141C22] mb-2 p-2 sm:p-3 border border-gray-200 dark:border-[#20282E] shadow-sm hover:shadow-md transition-all duration-200">
@@ -729,11 +870,21 @@ export default function Dashboard() {
                         <div className="text-center">
                           <p className="text-[#7e868c] text-xs mb-1">RISK</p>
                           <div className="flex space-x-1">
-                            <div className="w-1 h-3 sm:h-4 bg-[#69C02F] rounded-sm"></div>
-                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
-                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
-                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
-                            <div className="w-1 h-3 sm:h-4 bg-gray-200 rounded-sm"></div>
+                            <div className="text-center">
+                              {strategy.isStrategy ? (
+                                <div className="flex justify-center space-x-2">
+                                  <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                                    —
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex justify-center">
+                                  <div className="flex space-x-1.5">
+                                    {generateRiskBars(strategy.riskScore || 60)}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
 

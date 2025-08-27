@@ -1,0 +1,23 @@
+{
+  "name": "lp-agent",
+  "version": "0.1.3",
+  "author": "Ikem (x.com/ikempeter3) - YAO TEAM",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "aoform": "latest",
+    "yaml": "^2.4.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "license": "MIT",
+  "scripts": {
+    "process:deploy": "cd ./contract && ./scripts/deploy.sh",
+    "process:test": "cd ./contract && ./scripts/test.sh",
+    "process:build": "cd ./contract && ./scripts/build.sh"
+  },
+  "type": "module",
+  "dependencies": {
+    "@permaweb/aoconnect": "^0.0.90"
+  }
+}
