@@ -252,14 +252,14 @@ export default function StrategyDetail() {
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-12">
-          <div className="flex space-x-4 mb-6 mt-6 md:mt-20 border-b border-[#e6e6e6] dark:border-[#192127]">
+        <div className="mt-8 sm:mt-12">
+          <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6 mt-4 sm:mt-6 md:mt-20 border-b border-[#e6e6e6] dark:border-[#192127]">
             {["Manage", "Details", "Risks", "FAQs", "Transactions"].map(
               (tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab.toLowerCase())}
-                  className={`pb-2 text-sm font-medium p-1 px-4  rounded-tr-md rounded-tl-md transition-colors ${
+                  className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${
                     activeTab === tab.toLowerCase()
                       ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
                       : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
@@ -272,12 +272,12 @@ export default function StrategyDetail() {
           </div>
 
           {/* Tab Content */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-3 sm:mb-4">
                 How it works
               </h3>
-              <p className="text-[#565E64] dark:text-[#EAEAEA] text-sm leading-relaxed mb-6">
+              <p className="text-[#565E64] dark:text-[#EAEAEA] text-sm leading-relaxed mb-4 sm:mb-6">
                 Deploy your AR into your AO/wAR pool, automatically rebalancing
                 positions around the current price to optimize yield and reduce
                 the need for manual adjustments. Trading fees and DeFi Spring
@@ -286,11 +286,11 @@ export default function StrategyDetail() {
                 the strategy.
               </p>
 
-              <div className="bg-[#F3F3F3] dark:bg-[#141C22] md:p-5 p-3 rounded-xl w-fit">
-                <h4 className="font-semibold text-lg text-[#565E64] dark:text-[#EAEAEA] mb-3">
+              <div className="bg-[#F3F3F3] dark:bg-[#141C22] p-3 sm:p-4 md:p-5 rounded-xl w-full sm:w-fit">
+                <h4 className="font-semibold text-base sm:text-lg text-[#565E64] dark:text-[#EAEAEA] mb-2 sm:mb-3">
                   Key points to note:
                 </h4>
-                <ol className="list-decimal list-inside space-y-2 pl-0 md:pl-4 text-[#565e64] dark:text-[#EAEAEA]">
+                <ol className="list-decimal list-inside space-y-2 pl-0 sm:pl-4 text-[#565e64] dark:text-[#EAEAEA] text-sm">
                   <li>
                     During withdrawal, you may receive either or both tokens
                     depending on market conditions and prevailing prices.
@@ -303,24 +303,28 @@ export default function StrategyDetail() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-6 ">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6">
               <div className="flex items-center space-x-2 gradient-card p-1.5">
-                <span className="text-[#565e64] dark:text-[#95A0A6] text-sm">
+                <span className="text-[#565e64] dark:text-[#95A0A6] text-xs sm:text-sm">
                   Risk:
                 </span>
-                <span className="text-[#565e64] dark:text-[#95A0A6] text-sm">
+                <span className="text-[#565e64] dark:text-[#95A0A6] text-xs sm:text-sm">
                   Very Low
                 </span>
               </div>
-              <div className="flex items-center space-x-2  gradient-card p-2">
-                <img src={verified} alt="verified icon" />
-                <span className="text-[#565e64] dark:text-[#95A0A6] text-sm">
+              <div className="flex items-center space-x-2 gradient-card p-1.5 sm:p-2">
+                <img
+                  src={verified}
+                  alt="verified icon"
+                  className="w-3 h-3 sm:w-4 sm:h-4"
+                />
+                <span className="text-[#565e64] dark:text-[#95A0A6] text-xs sm:text-sm">
                   Audited
                 </span>
               </div>
-              <div className="flex items-center space-x-2  gradient-card p-2">
+              <div className="flex items-center space-x-2 gradient-card p-1.5 sm:p-2">
                 <svg
-                  className="w-4 h-4 text-[#565e64] dark:text-[#95A0A6]"
+                  className="w-3 h-3 sm:w-4 sm:h-4 text-[#565e64] dark:text-[#95A0A6]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -332,7 +336,7 @@ export default function StrategyDetail() {
                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                   />
                 </svg>
-                <span className="text-[#565e64] dark:text-[#95A0A6] text-sm">
+                <span className="text-[#565e64] dark:text-[#95A0A6] text-xs sm:text-sm">
                   Docs
                 </span>
               </div>

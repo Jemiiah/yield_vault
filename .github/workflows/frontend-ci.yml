@@ -28,7 +28,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 10
 
       - name: Get pnpm store directory
         shell: bash
@@ -46,6 +46,10 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: pnpm install
+
+      - name: Clear TypeScript cache
+        working-directory: frontend
+        run: rm -rf node_modules/.tmp
 
       - name: Run linting
         working-directory: frontend
