@@ -13,13 +13,12 @@ import back_btn from "../../public/back.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 import {
   createDataItemSigner,
-  dryrun,
   message,
   result
 } from "@permaweb/aoconnect";
 
 import {VAULT, AO_TOKEN} from "../constants/yao_process";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function StrategyDetail() {
   const queryClient = useQueryClient();
