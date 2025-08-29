@@ -19,6 +19,7 @@ import user_circle from "../../public/user-circle.svg";
 import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { RecommendButton } from "./recommendation";
 
 // Minimal pool type used by the UI
 interface Pool {
@@ -306,6 +307,7 @@ export default function Dashboard() {
         .map((p) => {
           const apyPct = deriveApyPct(p);
           const risk = calculateRisk(p);
+          console.log("p strategy xxxxxxxxxxxxxxxx", p);
           return {
             id:
               p.amm_process ||
@@ -473,27 +475,33 @@ export default function Dashboard() {
       </section>
 
       <div className="mx-4 sm:mx-6 md:mx-12 px-2 sm:px-4 md:px-6 pb-8">
-        <div className="flex space-x-4 sm:space-x-6 md:space-x-8 mb-4 sm:mb-6 border-b dark:border-[#20282E] border-[#EAEAEA]">
-          <button
-            onClick={() => setActiveTab("strategies")}
-            className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "strategies"
-                ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
-                : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
-            }`}
-          >
-            Strategies
-          </button>
-          <button
-            onClick={() => setActiveTab("find-yields")}
-            className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "find-yields"
-                ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
-                : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
-            }`}
-          >
-            Find Yields
-          </button>
+        <div className="flex justify-between space-x-4 sm:space-x-6 md:space-x-8 mb-4 sm:mb-6 border-b dark:border-[#20282E] border-[#EAEAEA]">
+          <div>
+            <button
+              onClick={() => setActiveTab("strategies")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "strategies"
+                  ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                  : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
+              }`}
+            >
+              Strategies
+            </button>
+            <button
+              onClick={() => setActiveTab("find-yields")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "find-yields"
+                  ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                  : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
+              }`}
+            >
+              Find Yields
+            </button>
+          </div>
+
+          <div className="flex items-center mb-1">
+            <RecommendButton />
+          </div>
         </div>
 
         {/* Token Cards */}

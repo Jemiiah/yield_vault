@@ -240,7 +240,7 @@ export default function StrategyDetail() {
                   <div className=" text-[#7e868c] text-xs">≈ 0.00 AR</div>
 
                   <Button
-                    className="w-full !mt-7 bg-[#A6ABAF] dark:bg-[#2F373D] hover:bg-[#929699] text-[#F8F7F4] h-12"
+                    className="w-full !mt-7 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
                     disabled={!(depositAmount || withdrawAmount)}
                   >
                     {depositWithdrawTab === "deposit" ? "Deposit" : "Withdraw"}
@@ -254,21 +254,23 @@ export default function StrategyDetail() {
         {/* Tabs Section */}
         <div className="mt-8 sm:mt-12">
           <div className="flex flex-wrap gap-2 sm:gap-4 mb-4 sm:mb-6 mt-4 sm:mt-6 md:mt-20 border-b border-[#e6e6e6] dark:border-[#192127]">
-            {["Manage", "Details", "Risks", "FAQs", "Transactions"].map(
-              (tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab.toLowerCase())}
-                  className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${
-                    activeTab === tab.toLowerCase()
-                      ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
-                      : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
-                  }`}
-                >
-                  {tab}
-                </button>
-              )
-            )}
+            <div className="flex flex-wrap gap-2 sm:gap-4 flex-1">
+              {["Manage", "Details", "Risks", "FAQs", "Transactions"].map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab.toLowerCase())}
+                    className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${
+                      activeTab === tab.toLowerCase()
+                        ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
+                        : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              )}
+            </div>
           </div>
 
           {/* Tab Content */}
