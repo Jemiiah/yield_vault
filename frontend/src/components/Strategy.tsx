@@ -88,7 +88,6 @@ export default function StrategyDetail() {
     [tokenLogos, logoLoading]
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // const fetchedStrategies = useMemo(
   //   () =>
   //     strategies.map((strategy) => {
@@ -259,12 +258,58 @@ export default function StrategyDetail() {
     return `${apyPct.toFixed(2)}%`;
   };
 
-  // Format USD values
+  // Calculate price change percentage
+  const calculatePriceChange = (
+    currentPrice: string | undefined,
+    previousPrice: string | undefined
+  ) => {
+    if (!currentPrice || !previousPrice)
+      return { percentage: "N/A", isPositive: false };
+
+    const current = Number(currentPrice);
+    const previous = Number(previousPrice);
+
+    if (previous === 0) return { percentage: "N/A", isPositive: false };
+
+    const change = ((current - previous) / previous) * 100;
+    return {
+      percentage: `${change.toFixed(2)}%`,
+      isPositive: change >= 0,
+    };
+  };
+
+  // Get token price with proper formatting
+  const getTokenPrice = (price: string | undefined, decimals: number = 6) => {
+    if (!price) return "$0.00";
+
+    const priceNum = Number(price);
+    if (isNaN(priceNum)) return "$0.00";
+
+    return `$${priceNum.toFixed(decimals)}`;
+  };
+
+  // Format USD values with proper scaling
   const formatUSD = (value: number | undefined) => {
-    if (!value) return "$0";
-    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}m`;
-    if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}k`;
-    return `$${value.toFixed(2)}`;
+    if (!value || isNaN(value)) return "$0";
+
+    // Handle very large numbers (billions)
+    if (value >= 1_000_000_000) {
+      return `$${(value / 1_000_000_000).toFixed(2)}B`;
+    }
+    // Handle millions
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}M`;
+    }
+    // Handle thousands
+    if (value >= 1_000) {
+      return `$${(value / 1_000).toFixed(2)}K`;
+    }
+    // Handle small values
+    if (value >= 1) {
+      return `$${value.toFixed(2)}`;
+    }
+    // Handle very small values
+    return `$${value.toFixed(6)}`;
   };
 
   // Skeleton loader components
@@ -489,7 +534,10 @@ export default function StrategyDetail() {
                             Current Price
                           </div>
                           <div className="font-semibold text-[#1A2228] dark:text-[#EAEAEA]">
-                            ${Number(pool.token0_current_price || 0).toFixed(6)}
+                            {getTokenPrice(
+                              pool.token0_current_price?.toString(),
+                              6
+                            )}
                           </div>
                         </div>
                         <div className="text-center p-2 bg-white/40 dark:bg-[#3D2B2B]/40 rounded border border-[#FECACA] dark:border-[#4A2F2F]">
@@ -497,7 +545,9 @@ export default function StrategyDetail() {
                             Market Cap
                           </div>
                           <div className="font-semibold text-[#1A2228] dark:text-[#EAEAEA]">
-                            {formatUSD(Number(pool.token0_market_cap))}
+                            {pool.token0_market_cap
+                              ? formatUSD(Number(pool.token0_market_cap))
+                              : "N/A"}
                           </div>
                         </div>
                         <div className="text-center p-2 bg-white/40 dark:bg-[#3D2B2B]/40 rounded border border-[#FECACA] dark:border-[#4A2F2F]">
@@ -506,24 +556,25 @@ export default function StrategyDetail() {
                           </div>
                           <div
                             className={`font-semibold ${
-                              pool.token0_price_24h_ago &&
-                              pool.token0_current_price
-                                ? Number(pool.token0_current_price) >
-                                  Number(pool.token0_price_24h_ago)
+                              calculatePriceChange(
+                                pool.token0_current_price?.toString(),
+                                pool.token0_price_24h_ago?.toString()
+                              ).percentage !== "N/A"
+                                ? calculatePriceChange(
+                                    pool.token0_current_price?.toString(),
+                                    pool.token0_price_24h_ago?.toString()
+                                  ).isPositive
                                   ? "text-green-600 dark:text-green-400"
                                   : "text-red-600 dark:text-red-400"
                                 : "text-[#7e868c]"
                             }`}
                           >
-                            {pool.token0_price_24h_ago &&
-                            pool.token0_current_price
-                              ? `${(
-                                  ((Number(pool.token0_current_price) -
-                                    Number(pool.token0_price_24h_ago)) /
-                                    Number(pool.token0_price_24h_ago)) *
-                                  100
-                                ).toFixed(2)}%`
-                              : "N/A"}
+                            {
+                              calculatePriceChange(
+                                pool.token0_current_price?.toString(),
+                                pool.token0_price_24h_ago?.toString()
+                              ).percentage
+                            }
                           </div>
                         </div>
                       </div>
@@ -554,7 +605,10 @@ export default function StrategyDetail() {
                             Current Price
                           </div>
                           <div className="font-semibold text-[#1A2228] dark:text-[#EAEAEA]">
-                            ${Number(pool.token1_current_price || 0).toFixed(6)}
+                            {getTokenPrice(
+                              pool.token1_current_price?.toString(),
+                              6
+                            )}
                           </div>
                         </div>
                         <div className="text-center p-2 bg-white/40 dark:bg-[#3D2B2B]/40 rounded border border-[#FECACA] dark:border-[#4A2F2F]">
@@ -562,7 +616,9 @@ export default function StrategyDetail() {
                             Market Cap
                           </div>
                           <div className="font-semibold text-[#1A2228] dark:text-[#EAEAEA]">
-                            {formatUSD(Number(pool.token1_market_cap))}
+                            {pool.token1_market_cap
+                              ? formatUSD(Number(pool.token1_market_cap))
+                              : "N/A"}
                           </div>
                         </div>
                         <div className="text-center p-2 bg-white/40 dark:bg-[#3D2B2B]/40 rounded border border-[#FECACA] dark:border-[#4A2F2F]">
@@ -571,24 +627,25 @@ export default function StrategyDetail() {
                           </div>
                           <div
                             className={`font-semibold ${
-                              pool.token1_price_24h_ago &&
-                              pool.token1_current_price
-                                ? Number(pool.token1_current_price) >
-                                  Number(pool.token1_price_24h_ago)
+                              calculatePriceChange(
+                                pool.token1_current_price?.toString(),
+                                pool.token1_price_24h_ago?.toString()
+                              ).percentage !== "N/A"
+                                ? calculatePriceChange(
+                                    pool.token1_current_price?.toString(),
+                                    pool.token1_price_24h_ago?.toString()
+                                  ).isPositive
                                   ? "text-green-600 dark:text-green-400"
                                   : "text-red-600 dark:text-red-400"
                                 : "text-[#7e868c]"
                             }`}
                           >
-                            {pool.token1_price_24h_ago &&
-                            pool.token1_current_price
-                              ? `${(
-                                  ((Number(pool.token1_current_price) -
-                                    Number(pool.token1_price_24h_ago)) /
-                                    Number(pool.token1_price_24h_ago)) *
-                                  100
-                                ).toFixed(2)}%`
-                              : "N/A"}
+                            {
+                              calculatePriceChange(
+                                pool.token1_current_price?.toString(),
+                                pool.token1_price_24h_ago?.toString()
+                              ).percentage
+                            }
                           </div>
                         </div>
                       </div>
