@@ -6,16 +6,13 @@ import { connect, createDataItemSigner, message } from '@permaweb/aoconnect';
 const ao = connect();
 const wallet = JSON.parse(
     readFileSync("./wallet.json").toString(),
-  );
-  
+);
+
 async function setEvalData() {
     try {
         // Read the main-process.lua file
         const luaContent = readFileSync('./contract/build/main-process.lua', 'utf8');
 
-        // Parse the content as [[ "the content of the file" ]]
-        const parsedContent = `[[ ${luaContent} ]]`;
-        
         // Get process ID from environment or command line args
         const processId = "CAT2qDMSaOFO1eXsYpKcitU2S-b31nW076_-q814RHM" //process.env.PROCESS_ID || process.argv[2];
 
