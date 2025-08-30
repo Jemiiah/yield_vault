@@ -107,7 +107,11 @@ export const useAPUSChat = (options: UseAPUSChatOptions = {}) => {
                         text: response.response || "No response received",
                         status:
                           response.status === "success" ? "received" : "error",
-                        error: response.error_message,
+                        error:
+                          response.error_message ==
+                          "Insufficient funds to process the request."
+                            ? "Apus AI not currently available. Please try again later."
+                            : response.error_message,
                         metadata: {
                           attestation: response.attestation,
                           responseTime: response.endtime
@@ -202,7 +206,11 @@ export const useAPUSChat = (options: UseAPUSChatOptions = {}) => {
                 ...msg,
                 text: response.response || "No response received",
                 status: response.status === "success" ? "received" : "error",
-                error: response.error_message,
+                error:
+                  response.error_message ==
+                  "Insufficient funds to process the request."
+                    ? "Apus AI not currently available. Please try again later."
+                    : response.error_message,
                 metadata: {
                   attestation: response.attestation,
                   responseTime: response.endtime
