@@ -12,14 +12,10 @@ import DashboardFooter from "./dashboard/dashboard_footer";
 import {
   getAgentInfo,
   withdrawFromAgent,
-  executeAgentStrategy,
-  type AgentInfo
+  // executeAgentStrategy,
+  type AgentInfo,
 } from "../services/aoService";
-import {
-  createDataItemSigner,
-  message,
-  result
-} from "@permaweb/aoconnect";
+import { createDataItemSigner, message, result } from "@permaweb/aoconnect";
 import { AO_TOKEN } from "../constants/yao_process";
 
 export default function Agent() {
@@ -31,12 +27,13 @@ export default function Agent() {
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [agentInfo, setAgentInfo] = useState<AgentInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_loading, setLoading] = useState(true);
   const [agentInfoError, setAgentInfoError] = useState<string | null>(null);
   const [transferError, setTransferError] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [isExecuting, setIsExecuting] = useState(false);
+  // const [isExecuting, setIsExecuting] = useState(false);
 
   // Fetch agent info
   useEffect(() => {
@@ -118,21 +115,21 @@ export default function Agent() {
     }
   };
 
-  const handleExecuteStrategy = async () => {
-    if (!agentId) return;
+  // const handleExecuteStrategy = async () => {
+  //   if (!agentId) return;
 
-    setIsExecuting(true);
-    try {
-      await executeAgentStrategy(agentId);
-      // Refresh agent info
-      const info = await getAgentInfo(agentId);
-      setAgentInfo(info as AgentInfo);
-    } catch (error) {
-      console.error("Strategy execution failed:", error);
-    } finally {
-      setIsExecuting(false);
-    }
-  };
+  //   setIsExecuting(true);
+  //   try {
+  //     await executeAgentStrategy(agentId);
+  //     // Refresh agent info
+  //     const info = await getAgentInfo(agentId);
+  //     setAgentInfo(info as AgentInfo);
+  //   } catch (error) {
+  //     console.error("Strategy execution failed:", error);
+  //   } finally {
+  //     setIsExecuting(false);
+  //   }
+  // };
 
   useEffect(() => {
     if (agentInfo) {
@@ -142,16 +139,30 @@ export default function Agent() {
   }, [agentInfo]);
 
   // Skeleton components
-  const SkeletonCard = ({ className = "", children }: { className?: string; children?: React.ReactNode }) => (
-    <Card className={`rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] shadow-lg ${className}`}>
-      <CardContent className="p-6">
-        {children}
-      </CardContent>
+  const SkeletonCard = ({
+    className = "",
+    children,
+  }: {
+    className?: string;
+    children?: React.ReactNode;
+  }) => (
+    <Card
+      className={`rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] shadow-lg ${className}`}
+    >
+      <CardContent className="p-6">{children}</CardContent>
     </Card>
   );
 
-  const SkeletonText = ({ width = "w-full", height = "h-4" }: { width?: string; height?: string }) => (
-    <div className={`${width} ${height} bg-gray-200 dark:bg-gray-700 rounded animate-pulse`}></div>
+  const SkeletonText = ({
+    width = "w-full",
+    height = "h-4",
+  }: {
+    width?: string;
+    height?: string;
+  }) => (
+    <div
+      className={`${width} ${height} bg-gray-200 dark:bg-gray-700 rounded animate-pulse`}
+    ></div>
   );
 
   const SkeletonBadge = () => (
@@ -177,9 +188,12 @@ export default function Agent() {
     return { days, hours, minutes };
   };
 
-  const timeRemaining = agentInfo && agentInfo["Run-Indefinitely"] === "true"
-    ? null
-    : agentInfo ? formatTime(agentInfo["End-Date"]) : null;
+  const timeRemaining =
+    agentInfo && agentInfo["Run-Indefinitely"] === "true"
+      ? null
+      : agentInfo
+      ? formatTime(agentInfo["End-Date"])
+      : null;
 
   return (
     <div className="min-h-screen bg-[#f8f7f4] dark:bg-[#0F1419]">
@@ -197,10 +211,22 @@ export default function Agent() {
         {agentInfoError && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
             <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <p className="text-red-600 dark:text-red-400 font-medium">{agentInfoError}</p>
+              <p className="text-red-600 dark:text-red-400 font-medium">
+                {agentInfoError}
+              </p>
             </div>
           </div>
         )}
@@ -212,8 +238,18 @@ export default function Agent() {
             <div>
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white dark:text-[#1A2228]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  <svg
+                    className="w-6 h-6 text-white dark:text-[#1A2228]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                    />
                   </svg>
                 </div>
                 <div>
@@ -233,12 +269,15 @@ export default function Agent() {
               <div className="flex flex-wrap gap-2 mt-4">
                 {agentInfo ? (
                   <>
-                    <Badge className={`rounded-lg font-medium ${agentInfo.Status === 'Active'
-                      ? 'bg-gradient-to-br from-green-50 to-green-100 text-green-800 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300'
-                      : agentInfo.Status === 'Ready'
-                        ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300'
-                        : 'bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-800 dark:from-yellow-900/20 dark:to-yellow-800/20 dark:text-yellow-300'
-                      }`}>
+                    <Badge
+                      className={`rounded-lg font-medium ${
+                        agentInfo.Status === "Active"
+                          ? "bg-gradient-to-br from-green-50 to-green-100 text-green-800 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300"
+                          : agentInfo.Status === "Ready"
+                          ? "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
+                          : "bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-800 dark:from-yellow-900/20 dark:to-yellow-800/20 dark:text-yellow-300"
+                      }`}
+                    >
                       {agentInfo.Status}
                     </Badge>
 
@@ -281,7 +320,7 @@ export default function Agent() {
                   </p>
                 </CardContent>
               </Card>
-            ) : timeRemaining && typeof timeRemaining === 'object' ? (
+            ) : timeRemaining && typeof timeRemaining === "object" ? (
               <div>
                 <h3 className="text-[#1A2228] dark:text-[#F5FBFF] text-xl mb-4">
                   Time Remaining:
@@ -292,7 +331,9 @@ export default function Agent() {
                       <div className="text-2xl font-bold text-[#1A2228] dark:text-[#F5FBFF]">
                         {timeRemaining.days}
                       </div>
-                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">Days</div>
+                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">
+                        Days
+                      </div>
                     </CardContent>
                   </Card>
                   <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] shadow-lg">
@@ -300,7 +341,9 @@ export default function Agent() {
                       <div className="text-2xl font-bold text-[#1A2228] dark:text-[#F5FBFF]">
                         {timeRemaining.hours}
                       </div>
-                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">Hours</div>
+                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">
+                        Hours
+                      </div>
                     </CardContent>
                   </Card>
                   <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] shadow-lg">
@@ -308,7 +351,9 @@ export default function Agent() {
                       <div className="text-2xl font-bold text-[#1A2228] dark:text-[#F5FBFF]">
                         {timeRemaining.minutes}
                       </div>
-                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">Min</div>
+                      <div className="text-[#565E64] dark:text-[#95A0A6] text-sm">
+                        Min
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -335,25 +380,33 @@ export default function Agent() {
                 {agentInfo ? (
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-[#565E64] dark:text-[#95A0A6]">Total Transactions:</span>
+                      <span className="text-[#565E64] dark:text-[#95A0A6]">
+                        Total Transactions:
+                      </span>
                       <span className="font-semibold text-[#1A2228] dark:text-[#F5FBFF] ml-2">
                         {agentInfo["Total-Transactions"]}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#565E64] dark:text-[#95A0A6]">Total Swaps:</span>
+                      <span className="text-[#565E64] dark:text-[#95A0A6]">
+                        Total Swaps:
+                      </span>
                       <span className="font-semibold text-[#1A2228] dark:text-[#F5FBFF] ml-2">
                         {agentInfo["Total-Swaps"]}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#565E64] dark:text-[#95A0A6]">Total LPs:</span>
+                      <span className="text-[#565E64] dark:text-[#95A0A6]">
+                        Total LPs:
+                      </span>
                       <span className="font-semibold text-[#1A2228] dark:text-[#F5FBFF] ml-2">
                         {agentInfo["Total-LPs"]}
                       </span>
                     </div>
                     <div>
-                      <span className="text-[#565E64] dark:text-[#95A0A6]">AO Sold:</span>
+                      <span className="text-[#565E64] dark:text-[#95A0A6]">
+                        AO Sold:
+                      </span>
                       <span className="font-semibold text-[#1A2228] dark:text-[#F5FBFF] ml-2">
                         {agentInfo["Total-AO-Sold"]}
                       </span>
@@ -406,20 +459,22 @@ export default function Agent() {
             <div className="flex space-x-4">
               <Button
                 onClick={() => setDepositWithdrawTab("deposit")}
-                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${depositWithdrawTab === "deposit"
-                  ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
-                  : "bg-transparent text-[#25A8CF]"
-                  }`}
+                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${
+                  depositWithdrawTab === "deposit"
+                    ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
+                    : "bg-transparent text-[#25A8CF]"
+                }`}
               >
                 Deposit
               </Button>
               <Button
                 onClick={() => setDepositWithdrawTab("withdraw")}
                 variant="default"
-                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${depositWithdrawTab === "withdraw"
-                  ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
-                  : "bg-transparent text-[#25A8CF]"
-                  }`}
+                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${
+                  depositWithdrawTab === "withdraw"
+                    ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
+                    : "bg-transparent text-[#25A8CF]"
+                }`}
               >
                 Withdraw
               </Button>
@@ -429,7 +484,9 @@ export default function Agent() {
               <CardContent className="px-6 py-3">
                 {transferError && (
                   <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-red-600 dark:text-red-400 text-sm">{transferError}</p>
+                    <p className="text-red-600 dark:text-red-400 text-sm">
+                      {transferError}
+                    </p>
                   </div>
                 )}
                 <div className="space-y-4">
@@ -438,7 +495,9 @@ export default function Agent() {
                       <div className="w-6 h-6 rounded-full flex items-center justify-center">
                         <img src={ao_logo} alt="ao token" />
                       </div>
-                      <span className="font-medium dark:text-[#EAEAEA]">AO</span>
+                      <span className="font-medium dark:text-[#EAEAEA]">
+                        AO
+                      </span>
                       <svg
                         className="w-4 h-4 text-[#7e868c]"
                         fill="none"
@@ -455,7 +514,9 @@ export default function Agent() {
                     </div>
                     <div className="text-right">
                       <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">
-                        {depositWithdrawTab === "deposit" ? "Wallet Balance" : "Agent Balance"}
+                        {depositWithdrawTab === "deposit"
+                          ? "Wallet Balance"
+                          : "Agent Balance"}
                       </div>
                       <div className="font-medium text-lg text-[#565E64] dark:text-[#EAEAEA]">
                         Loading...
@@ -467,7 +528,11 @@ export default function Agent() {
                     <Input
                       type="text"
                       placeholder="$ 0.00"
-                      value={depositWithdrawTab === "deposit" ? depositAmount : withdrawAmount}
+                      value={
+                        depositWithdrawTab === "deposit"
+                          ? depositAmount
+                          : withdrawAmount
+                      }
                       onChange={(e) => {
                         if (depositWithdrawTab === "deposit") {
                           setDepositAmount(e.target.value);
@@ -502,7 +567,9 @@ export default function Agent() {
                     className="w-full !mt-7 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
                     disabled={
                       !(depositAmount || withdrawAmount) ||
-                      (depositWithdrawTab === "deposit" ? isDepositing : isWithdrawing)
+                      (depositWithdrawTab === "deposit"
+                        ? isDepositing
+                        : isWithdrawing)
                     }
                     onClick={() => {
                       if (depositWithdrawTab === "deposit") {
@@ -544,10 +611,11 @@ export default function Agent() {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab.toLowerCase())}
-                  className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${activeTab === tab.toLowerCase()
-                    ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
-                    : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
-                    }`}
+                  className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${
+                    activeTab === tab.toLowerCase()
+                      ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
+                      : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
+                  }`}
                 >
                   {tab}
                 </button>
@@ -564,8 +632,10 @@ export default function Agent() {
                 </h3>
                 {agentInfo ? (
                   <p className="text-[#565E64] dark:text-[#95A0A6] text-sm leading-relaxed mb-4 sm:mb-6">
-                    This agent automatically executes the {agentInfo["Strategy-Type"]} strategy on the {agentInfo.Dex} DEX.
-                    It converts {agentInfo["Conversion-Percentage"]}% of deposited tokens through swaps and liquidity provision.
+                    This agent automatically executes the{" "}
+                    {agentInfo["Strategy-Type"]} strategy on the {agentInfo.Dex}{" "}
+                    DEX. It converts {agentInfo["Conversion-Percentage"]}% of
+                    deposited tokens through swaps and liquidity provision.
                   </p>
                 ) : (
                   <div className="mb-4 sm:mb-6">
@@ -646,7 +716,10 @@ export default function Agent() {
                           Start Date: {formatDate(agentInfo["Start-Date"])}
                         </p>
                         <p className="text-sm text-[#565E64] dark:text-[#95A0A6]">
-                          End Date: {agentInfo["Run-Indefinitely"] === "true" ? "Indefinite" : formatDate(agentInfo["End-Date"])}
+                          End Date:{" "}
+                          {agentInfo["Run-Indefinitely"] === "true"
+                            ? "Indefinite"
+                            : formatDate(agentInfo["End-Date"])}
                         </p>
                       </>
                     ) : (
@@ -696,7 +769,9 @@ export default function Agent() {
                         DEX
                       </label>
                       {agentInfo ? (
-                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">{agentInfo.Dex}</p>
+                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">
+                          {agentInfo.Dex}
+                        </p>
                       ) : (
                         <SkeletonText width="w-20" height="h-5" />
                       )}
@@ -706,7 +781,9 @@ export default function Agent() {
                         Strategy Type
                       </label>
                       {agentInfo ? (
-                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">{agentInfo["Strategy-Type"]}</p>
+                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">
+                          {agentInfo["Strategy-Type"]}
+                        </p>
                       ) : (
                         <SkeletonText width="w-24" height="h-5" />
                       )}
@@ -716,7 +793,9 @@ export default function Agent() {
                         Slippage Tolerance
                       </label>
                       {agentInfo ? (
-                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">{agentInfo.Slippage}%</p>
+                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">
+                          {agentInfo.Slippage}%
+                        </p>
                       ) : (
                         <SkeletonText width="w-12" height="h-5" />
                       )}
@@ -726,7 +805,9 @@ export default function Agent() {
                         Conversion Percentage
                       </label>
                       {agentInfo ? (
-                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">{agentInfo["Conversion-Percentage"]}%</p>
+                        <p className="text-[#1A2228] dark:text-[#F5FBFF]">
+                          {agentInfo["Conversion-Percentage"]}%
+                        </p>
                       ) : (
                         <SkeletonText width="w-16" height="h-5" />
                       )}

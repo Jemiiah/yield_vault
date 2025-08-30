@@ -1,4 +1,10 @@
-import { message, result, dryrun, createDataItemSigner } from "@permaweb/aoconnect";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  message,
+  result,
+  dryrun,
+  createDataItemSigner,
+} from "@permaweb/aoconnect";
 import { MANAGER_CONTRACT } from "../constants/yao_process";
 import type {
   RiskAssessmentData,
@@ -90,8 +96,12 @@ export async function getAIRecommendations(
       const lastMessage = response.Messages[response.Messages.length - 1];
 
       if (lastMessage.Tags) {
-        const actionTag = lastMessage.Tags.find((tag: any) => tag.name === "Action");
-        const errorTag = lastMessage.Tags.find((tag: any) => tag.name === "Error");
+        const actionTag = lastMessage.Tags.find(
+          (tag: any) => tag.name === "Action"
+        );
+        const errorTag = lastMessage.Tags.find(
+          (tag: any) => tag.name === "Error"
+        );
 
         if (actionTag?.value === "AI-Recommendations-Response") {
           return await parseAIResponse(response);
@@ -118,7 +128,9 @@ async function parseAIResponse(response: any): Promise<Pool[]> {
     }
 
     const lastMessage = response.Messages[response.Messages.length - 1];
-    const actionTag = lastMessage.Tags?.find((tag: { name: string; value: string; }) => tag.name === "Action");
+    const actionTag = lastMessage.Tags?.find(
+      (tag: { name: string; value: string }) => tag.name === "Action"
+    );
 
     if (actionTag?.value !== "AI-Recommendations-Response") {
       throw new Error("Invalid response action");
@@ -136,7 +148,10 @@ async function parseAIResponse(response: any): Promise<Pool[]> {
       const backendResponse = await fetch(`${API_BASE}/pools`);
       if (backendResponse.ok) {
         backendPools = await backendResponse.json();
-        console.log("Fetched backend pools for token data:", backendPools.length);
+        console.log(
+          "Fetched backend pools for token data:",
+          backendPools.length
+        );
       }
     } catch (error) {
       console.warn("Failed to fetch backend pools, using AI data only:", error);
@@ -145,14 +160,16 @@ async function parseAIResponse(response: any): Promise<Pool[]> {
     // Convert AI recommendations to Pool format with backend token data
     return data.recommendations.map((rec): Pool => {
       // Find matching pool in backend data by amm_process
-      const backendPool = backendPools.find(pool => pool.amm_process === rec.pool_id);
+      const backendPool = backendPools.find(
+        (pool) => pool.amm_process === rec.pool_id
+      );
 
       if (backendPool) {
         console.log("Found matching backend pool for", rec.pool_id, ":", {
           token0: backendPool.token0,
           token1: backendPool.token1,
           token0_ticker: backendPool.token0_ticker,
-          token1_ticker: backendPool.token1_ticker
+          token1_ticker: backendPool.token1_ticker,
         });
 
         return {
@@ -162,7 +179,9 @@ async function parseAIResponse(response: any): Promise<Pool[]> {
           risk: rec.risk_level,
           tokens: [backendPool.token0_ticker, backendPool.token1_ticker],
           description: rec.reasoning,
-          tvl: backendPool.liquidity_usd ? `$${backendPool.liquidity_usd.toLocaleString()}` : "N/A",
+          tvl: backendPool.liquidity_usd
+            ? `$${backendPool.liquidity_usd.toLocaleString()}`
+            : "N/A",
           verified: true,
           amm_process: rec.pool_id,
           // Use backend pool data for accurate token processes
@@ -175,8 +194,14 @@ async function parseAIResponse(response: any): Promise<Pool[]> {
         };
       } else {
         // Fallback to parsing token pair if no backend data found
-        console.warn("No backend pool data found for", rec.pool_id, "using token pair parsing");
-        const tokens = rec.token_pair.includes("/") ? rec.token_pair.split("/") : [rec.token_pair];
+        console.warn(
+          "No backend pool data found for",
+          rec.pool_id,
+          "using token pair parsing"
+        );
+        const tokens = rec.token_pair.includes("/")
+          ? rec.token_pair.split("/")
+          : [rec.token_pair];
         const token0 = tokens[0]?.trim();
         const token1 = tokens[1]?.trim();
 
@@ -247,10 +272,14 @@ export async function spawnAgent(config: AgentSpawnConfig): Promise<string> {
 
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
-      const actionTag = lastMessage.Tags?.find((tag: { name: string; value: string; }) => tag.name === "Action");
+      const actionTag = lastMessage.Tags?.find(
+        (tag: { name: string; value: string }) => tag.name === "Action"
+      );
 
       if (actionTag?.value === "Spawn-Agent-Pending") {
-        const sessionIdTag = lastMessage.Tags?.find((tag: { name: string; }) => tag.name === "Session-Id");
+        const sessionIdTag = lastMessage.Tags?.find(
+          (tag: { name: string }) => tag.name === "Session-Id"
+        );
 
         // Wait for agent to be spawned (simplified approach)
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -259,7 +288,9 @@ export async function spawnAgent(config: AgentSpawnConfig): Promise<string> {
         // For now, return the session ID as a placeholder
         return sessionIdTag?.value || "pending";
       } else if (actionTag?.value === "Spawn-Agent-Error") {
-        const errorTag = lastMessage.Tags?.find((tag: { name: string; }) => tag.name === "Error");
+        const errorTag = lastMessage.Tags?.find(
+          (tag: { name: string }) => tag.name === "Error"
+        );
         throw new Error(errorTag?.value || "Agent spawn failed");
       }
     }
@@ -278,7 +309,10 @@ export async function getUserAgents(
   userAddress?: string
 ): Promise<AgentRecord[]> {
   try {
-    console.log("Getting user agents from Manager Contract", userAddress ? `for user: ${userAddress}` : "");
+    console.log(
+      "Getting user agents from Manager Contract",
+      userAddress ? `for user: ${userAddress}` : ""
+    );
 
     const response = await dryrun({
       process: MANAGER_CONTRACT,
@@ -298,8 +332,11 @@ export async function getUserAgents(
       console.log("Last message Action:", lastMessage.Tags?.Action);
 
       // Find the message with User-Agents-Response action
-      const responseMessage = response.Messages.find(msg =>
-        msg.Tags?.some((tag: { name: string; value: string; }) => tag.name === "Action" && tag.value === "User-Agents-Response")
+      const responseMessage = response.Messages.find((msg) =>
+        msg.Tags?.some(
+          (tag: { name: string; value: string }) =>
+            tag.name === "Action" && tag.value === "User-Agents-Response"
+        )
       );
 
       if (responseMessage) {
@@ -313,8 +350,15 @@ export async function getUserAgents(
           console.log("Raw data:", responseMessage.Data);
           throw new Error("Failed to parse agent data from Manager Contract");
         }
-      } else if (lastMessage.Tags?.some((tag: { name: string; value: string; }) => tag.name === "Action" && tag.value === "User-Agents-Error")) {
-        const errorTag = lastMessage.Tags?.find((tag: { name: string; }) => tag.name === "Error");
+      } else if (
+        lastMessage.Tags?.some(
+          (tag: { name: string; value: string }) =>
+            tag.name === "Action" && tag.value === "User-Agents-Error"
+        )
+      ) {
+        const errorTag = lastMessage.Tags?.find(
+          (tag: { name: string }) => tag.name === "Error"
+        );
         throw new Error(errorTag?.value || "Failed to get user agents");
       } else {
         console.log("No User-Agents-Response message found");
@@ -342,8 +386,11 @@ export async function getAvailablePools(): Promise<Pool[]> {
     });
 
     if (response.Messages && response.Messages.length > 0) {
-      const responseMessage = response.Messages.find(msg =>
-        msg.Tags?.some((tag: { name: string; value: string; }) => tag.name === "Action" && tag.value === "Available-Pools-Response")
+      const responseMessage = response.Messages.find((msg) =>
+        msg.Tags?.some(
+          (tag: { name: string; value: string }) =>
+            tag.name === "Action" && tag.value === "Available-Pools-Response"
+        )
       );
 
       if (responseMessage) {
@@ -351,7 +398,6 @@ export async function getAvailablePools(): Promise<Pool[]> {
 
         // Convert Manager Contract pool format to frontend Pool format
         return poolsData.map(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (pool: any): Pool => ({
             id: pool.id,
             name: pool.name,
@@ -405,7 +451,9 @@ export interface AgentInfo {
 /**
  * Get agent info by calling Info action on the agent process
  */
-export async function getAgentInfo(agentProcessId: string): Promise<AgentInfo | undefined> {
+export async function getAgentInfo(
+  agentProcessId: string
+): Promise<AgentInfo | undefined> {
   console.log("Getting agent info for process:", agentProcessId);
 
   const response = await dryrun({
@@ -420,8 +468,11 @@ export async function getAgentInfo(agentProcessId: string): Promise<AgentInfo | 
     console.log("Last message tags:", lastMessage.Tags);
 
     // Find the message with Info-Response action
-    const responseMessage = response.Messages.find(msg =>
-      msg.Tags?.some((tag: { name: string; value: string; }) => tag.name === "Action" && tag.value === "Info-Response")
+    const responseMessage = response.Messages.find((msg) =>
+      msg.Tags?.some(
+        (tag: { name: string; value: string }) =>
+          tag.name === "Action" && tag.value === "Info-Response"
+      )
     );
 
     if (responseMessage) {
@@ -430,7 +481,7 @@ export async function getAgentInfo(agentProcessId: string): Promise<AgentInfo | 
       // Convert tags array to AgentInfo object
       const agentInfo: Partial<AgentInfo> = {};
 
-      responseMessage.Tags?.forEach((tag: { name: string; value: string; }) => {
+      responseMessage.Tags?.forEach((tag: { name: string; value: string }) => {
         // Map tag names to AgentInfo properties
         switch (tag.name) {
           case "Start-Date":
@@ -530,7 +581,12 @@ export async function withdrawFromAgent(
   transferAll?: boolean
 ): Promise<void> {
   try {
-    console.log("Withdrawing from agent:", { agentProcessId, tokenId, quantity, transferAll });
+    console.log("Withdrawing from agent:", {
+      agentProcessId,
+      tokenId,
+      quantity,
+      transferAll,
+    });
 
     if (!window.arweaveWallet) {
       throw new Error("Wallet not connected");
@@ -562,13 +618,17 @@ export async function withdrawFromAgent(
       const lastMessage = response.Messages[response.Messages.length - 1];
 
       // Check for success or error in tags
-      const actionTag = lastMessage.Tags?.find((tag: { name: string; value: string; }) => tag.name === "Action");
+      const actionTag = lastMessage.Tags?.find(
+        (tag: { name: string; value: string }) => tag.name === "Action"
+      );
 
       if (actionTag?.value === "Withdraw-Success") {
         console.log("Withdrawal successful");
         return;
       } else if (actionTag?.value === "Withdraw-Error") {
-        const errorTag = lastMessage.Tags?.find((tag: { name: string; }) => tag.name === "Error");
+        const errorTag = lastMessage.Tags?.find(
+          (tag: { name: string }) => tag.name === "Error"
+        );
         throw new Error(errorTag?.value || "Withdrawal failed");
       }
     }
@@ -583,7 +643,9 @@ export async function withdrawFromAgent(
 /**
  * Execute strategy on agent
  */
-export async function executeAgentStrategy(agentProcessId: string): Promise<void> {
+export async function executeAgentStrategy(
+  agentProcessId: string
+): Promise<void> {
   try {
     console.log("Executing strategy on agent:", agentProcessId);
 
@@ -606,13 +668,20 @@ export async function executeAgentStrategy(agentProcessId: string): Promise<void
       const lastMessage = response.Messages[response.Messages.length - 1];
 
       // Check for success or error in tags
-      const actionTag = lastMessage.Tags?.find((tag: { name: string; value: string; }) => tag.name === "Action");
+      const actionTag = lastMessage.Tags?.find(
+        (tag: { name: string; value: string }) => tag.name === "Action"
+      );
 
-      if (actionTag?.value?.includes("Success") || actionTag?.value?.includes("Queued")) {
+      if (
+        actionTag?.value?.includes("Success") ||
+        actionTag?.value?.includes("Queued")
+      ) {
         console.log("Strategy execution successful");
         return;
       } else if (actionTag?.value?.includes("Error")) {
-        const errorTag = lastMessage.Tags?.find((tag: { name: string; }) => tag.name === "Error");
+        const errorTag = lastMessage.Tags?.find(
+          (tag: { name: string }) => tag.name === "Error"
+        );
         throw new Error(errorTag?.value || "Strategy execution failed");
       }
     }

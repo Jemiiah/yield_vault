@@ -194,59 +194,6 @@ export default function Dashboard() {
     [isStableToken, isAOToken, isGameToken]
   );
 
-  const fetchPools = useCallback(async (signal: AbortSignal) => {
-    const API_BASE = "http://localhost:3000";
-    const url = `${API_BASE}/pools`;
-
-    const response = await fetch(url, { signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json().catch(() => null);
-    if (data == null) {
-      const txt = await response.text();
-      try {
-        const parsed = JSON.parse(txt);
-        return parsed;
-      } catch {
-        throw new Error("Bad payload");
-      }
-    }
-    return data;
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoadingPools(true);
-    setPoolsError(null);
-
-    fetchPools(controller.signal)
-      .then((data: unknown) => {
-        type WithItems = { items?: unknown };
-        let arr: Pool[] = [];
-        if (Array.isArray(data)) {
-          arr = data as Pool[];
-        } else if (
-          data &&
-          typeof data === "object" &&
-          Array.isArray((data as WithItems).items)
-        ) {
-          arr = (data as { items: Pool[] }).items;
-        }
-        setPools(arr);
-      })
-      .catch((e) => {
-        if (e.name === "AbortError") return;
-        setPoolsError("Failed to load pools");
-      })
-      .finally(() => {
-        setLoadingPools(false);
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [fetchPools]);
-
   // Fetch agents when agents tab is active
   useEffect(() => {
     if (activeTab !== "agents") return;

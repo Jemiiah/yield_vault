@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 
 // Pool interface matching what's used in Dashboard
 interface Pool {
-  transactions: string;
   amm_status: string;
   fixed_supply: any;
   amm_discovered_at_ts: any;
@@ -12,6 +11,7 @@ interface Pool {
   token0_price_24h_ago: number | undefined;
   token1_market_cap(token1_market_cap: any): number | undefined;
   token1_price_24h_ago: number | undefined;
+  transactions: string;
   amm_name?: string;
   amm_process?: string;
   token0?: string;
@@ -274,6 +274,7 @@ export function PoolProvider({ children }: { children: ReactNode }) {
   // Fetch pools when component mounts
   useEffect(() => {
     fetchPools();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Value object that will be provided to consumers

@@ -49,32 +49,35 @@ export default function StrategyDetail() {
   );
 
   // Function to fetch token logo
-  const fetchTokenLogo = async (tokenId: string) => {
-    if (!tokenId || tokenLogos[tokenId] || logoLoading.has(tokenId)) return;
+  const fetchTokenLogo = React.useCallback(
+    async (tokenId: string) => {
+      if (!tokenId || tokenLogos[tokenId] || logoLoading.has(tokenId)) return;
 
-    setLogoLoading((prev) => new Set(prev).add(tokenId));
+      setLogoLoading((prev) => new Set(prev).add(tokenId));
 
-    try {
-      const tokenInfo = await getTokenInfo(tokenId);
-      setTokenLogos((prev) => ({
-        ...prev,
-        [tokenId]: tokenInfo.logo,
-      }));
-    } catch (error) {
-      console.error(`Failed to fetch logo for token ${tokenId}:`, error);
-      // Use fallback logo on error
-      setTokenLogos((prev) => ({
-        ...prev,
-        [tokenId]: ao_token,
-      }));
-    } finally {
-      setLogoLoading((prev) => {
-        const newSet = new Set(prev);
-        newSet.delete(tokenId);
-        return newSet;
-      });
-    }
-  };
+      try {
+        const tokenInfo = await getTokenInfo(tokenId);
+        setTokenLogos((prev) => ({
+          ...prev,
+          [tokenId]: tokenInfo.logo,
+        }));
+      } catch (error) {
+        console.error(`Failed to fetch logo for token ${tokenId}:`, error);
+        // Use fallback logo on error
+        setTokenLogos((prev) => ({
+          ...prev,
+          [tokenId]: ao_token,
+        }));
+      } finally {
+        setLogoLoading((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(tokenId);
+          return newSet;
+        });
+      }
+    },
+    [tokenLogos, logoLoading]
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fetchedStrategies = useMemo(
@@ -107,7 +110,7 @@ export default function StrategyDetail() {
       if (pool.token0) fetchTokenLogo(pool.token0);
       if (pool.token1) fetchTokenLogo(pool.token1);
     }
-  }, [pool]);
+  }, [pool, fetchTokenLogo]);
 
   // integrate deposit and withdraw logic
 
