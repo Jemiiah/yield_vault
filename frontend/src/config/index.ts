@@ -1,6 +1,6 @@
 export const config = {
   // AO Network Configuration
-  aoProcessId: "ZZkO9BJvOiDnhhlSfYOHezk1czIboXQVb8oI3NSlai8", // TODO: Replace with your AO process ID
+  aoProcessId: "IsQP5wdczXrnh80motwp1wTOiPkZnfUGzPsLUWQy03s", // TODO: Replace with your AO process ID
 
   // APUS HyperBEAM Node Configuration
   apusHyperbeamNodeUrl: "http://72.46.85.207:8734",

@@ -20,6 +20,7 @@ import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { RecommendButton } from "./recommendation";
+import { usePools } from "../contexts/PoolContext";
 
 // Minimal pool type used by the UI
 interface Pool {
@@ -43,9 +44,14 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("strategies");
   // const [currentPage, setCurrentPage] = useState(1);
   const theme = useTheme();
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [loadingPools, setLoadingPools] = useState(false);
-  const [poolsError, setPoolsError] = useState<string | null>(null);
+
+  // Use global pool state instead of local state
+  const {
+    pools,
+    strategies,
+    loading: loadingPools,
+    error: poolsError,
+  } = usePools();
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -182,59 +188,6 @@ export default function Dashboard() {
     [isStableToken, isAOToken, isGameToken]
   );
 
-  const fetchPools = useCallback(async (signal: AbortSignal) => {
-    const API_BASE = "http://localhost:3000";
-    const url = `${API_BASE}/pools`;
-
-    const response = await fetch(url, { signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const data = await response.json().catch(() => null);
-    if (data == null) {
-      const txt = await response.text();
-      try {
-        const parsed = JSON.parse(txt);
-        return parsed;
-      } catch {
-        throw new Error("Bad payload");
-      }
-    }
-    return data;
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoadingPools(true);
-    setPoolsError(null);
-
-    fetchPools(controller.signal)
-      .then((data: unknown) => {
-        type WithItems = { items?: unknown };
-        let arr: Pool[] = [];
-        if (Array.isArray(data)) {
-          arr = data as Pool[];
-        } else if (
-          data &&
-          typeof data === "object" &&
-          Array.isArray((data as WithItems).items)
-        ) {
-          arr = (data as { items: Pool[] }).items;
-        }
-        setPools(arr);
-      })
-      .catch((e) => {
-        if (e.name === "AbortError") return;
-        setPoolsError("Failed to load pools");
-      })
-      .finally(() => {
-        setLoadingPools(false);
-      });
-
-    return () => {
-      controller.abort();
-    };
-  }, [fetchPools]);
-
   const deriveApyPct = useMemo(
     () =>
       (pool: Pool): number => {
@@ -301,51 +254,42 @@ export default function Dashboard() {
     []
   );
 
+  // Use strategies from global state and enhance them with logos
   const fetchedStrategies = useMemo(
     () =>
-      pools
-        .map((p) => {
-          const apyPct = deriveApyPct(p);
-          const risk = calculateRisk(p);
-          // console.log("p strategy xxxxxxxxxxxxxxxx", p);
-          return {
-            id:
-              p.amm_process ||
-              `${p.token0_ticker || ""}-${p.token1_ticker || ""}`,
-            name:
-              p.amm_name ||
-              `${p.token0_ticker || p.token0_name}/${
-                p.token1_ticker || p.token1_name
-              }`,
-            token_icon: getTokenLogo(p.token0),
-            token_icon2: getTokenLogo(p.token1),
-            verified: verified,
-            protocol:
-              (p.amm_name && String(p.amm_name).split(" ")[0]) || "Botega",
-            protocol_icon: user_circle,
-            apy: fmtPct(apyPct),
-            apyColor: apyPct >= 0 ? "text-blue-500" : "text-red-500",
-            risk: risk.risk,
-            riskScore: risk.score,
-            tvl: fmtUSD(Number(p.liquidity_usd) || 0),
-            badges: [],
-            points: "",
-            isStrategy: false,
-          };
-        })
-        .filter((strategy) => {
-          const apyNum = Number(strategy.apy.replace("%", ""));
-          return apyNum > 0;
-        })
-        .sort((a, b) => {
-          // Sort by risk score first (higher = safer), then by APY
-          if (a.riskScore !== b.riskScore) return b.riskScore - a.riskScore;
-          return (
-            Number(b.apy.replace("%", "")) - Number(a.apy.replace("%", ""))
-          );
-        }),
-    [pools, deriveApyPct, fmtPct, fmtUSD, calculateRisk, getTokenLogo]
+      strategies.map((strategy) => {
+        console.log("strategy in dashboard", strategy);
+        // Find the corresponding pool to get token IDs for logos
+
+        console.log("pools in dashboard XXXXXXXXXXXXXXX", pools);
+        const pool = pools.find(
+          (p) =>
+            p.amm_process === strategy.id ||
+            `${p.token0_ticker || ""}-${p.token1_ticker || ""}` === strategy.id
+        );
+
+        return {
+          ...strategy,
+          token_icon: getTokenLogo(pool?.token0),
+          token_icon2: getTokenLogo(pool?.token1),
+          verified: verified,
+          protocol_icon: user_circle,
+        };
+      }),
+    [strategies, pools, getTokenLogo]
   );
+
+  // Store strategies and raw pool data in localStorage for Strategy component
+  useEffect(() => {
+    if (pools.length > 0) {
+      localStorage.setItem(
+        "fetchedStrategies",
+        JSON.stringify(fetchedStrategies)
+      );
+      localStorage.setItem("rawPoolsData", JSON.stringify(pools));
+      console.log("Stored strategies and pools data in localStorage");
+    }
+  }, [pools, fetchedStrategies]);
 
   const dynamicTokenCards = useMemo(() => {
     return pools

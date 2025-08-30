@@ -1,5 +1,241 @@
 do
 local _ENV = _ENV
+package.preload[ "apus_agent" ] = function( ... ) local arg = _G.arg;
+local json = require("json")
+
+-- Backend AO Process Logic (Core Flow from section 2.5)
+
+CurrentReference = CurrentReference or 0 -- Initialize or use existing reference counter
+Tasks = Tasks or {}                      -- Your process's state where results are stored
+Balances = Balances or "0"               -- Store balance information for each reference
+
+APUS_ROUTER = "Bf6JJR2tl2Wr38O2-H6VctqtduxHgKF-NzRB9HhTRzo"
+
+-- Handler to listen for prompts from your frontend
+Handlers.add(
+    "SendInfer",
+    Handlers.utils.hasMatchingTag("Action", "Infer"),
+    function(msg)
+        local reference = msg.Tags["X-Reference"] or msg.Reference
+        local requestReference = reference
+        local request = {
+            Target = APUS_ROUTER,
+            Action = "Infer",
+            ["X-Prompt"] = msg.Data,
+            ["X-Reference"] = reference
+        }
+        if msg.Tags["X-Session"] then
+            request["X-Session"] = msg.Tags["X-Session"]
+        end
+        if msg.Tags["X-Options"] then
+            request["X-Options"] = msg.Tags["X-Options"]
+        end
+        Tasks[requestReference] = {
+            prompt = request["X-Prompt"],
+            options = request["X-Options"],
+            session = request["X-Session"],
+            reference = reference,
+            status = "processing",
+            starttime = os.time(),
+        }
+        Send({
+            device = 'patch@1.0',
+            cache = {
+                tasks = Tasks
+            }
+        })
+        ao.send(request)
+        
+        -- Reply immediately to the frontend with the task reference
+        msg.reply({
+            TaskRef = reference,
+            Data = "request accepted, taskRef: " .. reference
+        })
+    end
+)
+
+Handlers.add(
+    "AcceptResponse",
+    Handlers.utils.hasMatchingTag("Action", "Infer-Response"),
+    function(msg)
+        local reference = msg.Tags["X-Reference"] or ""
+        print(msg)
+
+        if msg.Tags["Code"] then
+            -- Update task status to failed
+            if Tasks[reference] then
+                local error_message = msg.Tags["Message"] or "Unknown error"
+                Tasks[reference].status = "failed"
+                Tasks[reference].error_message = error_message
+                Tasks[reference].error_code = msg.Tags["Code"]
+                Tasks[reference].endtime = os.time()
+            end
+            Send({
+                device = 'patch@1.0',
+                cache = {
+                    tasks = {
+                        [reference] = Tasks[reference] }
+                }
+            })
+            return
+        end
+        Tasks[reference].response = msg.Data or ""
+        Tasks[reference].status = "success"
+        Tasks[reference].endtime = os.time()
+
+        Send({
+            device = 'patch@1.0',
+            cache = {
+                tasks = {
+                    [reference] = Tasks[reference] }
+            }
+        })
+    end
+)
+
+Handlers.add(
+    "GetInferResponse",
+    Handlers.utils.hasMatchingTag("Action", "GetInferResponse"),
+    function(msg)
+        local reference = msg.Tags["X-Reference"] or ""
+        print(Tasks[reference])
+        if Tasks[reference] then
+            msg.reply({Data = json.encode(Tasks[reference])})
+        else
+            msg.reply({Data = "Task not found"}) -- if task not found, return error
+        end
+    end
+)
+
+-- Frontend workflow
+-- 1. User input a prompt
+-- 2. Generate a unique reference ID for the request
+-- 3. Send the prompt to the backend
+-- 4. Wait for the request ended, show a loading indicator
+-- 5. Query the task status by Patch API(this is AO HyperBEAM's API for your process, not APUS service!):
+--  `GET /{your_process_id}~process@1.0/now/cache/tasks/{your_process_id}-{reference}/serialize~json@1.0`
+-- 6. display the response or error message
+-- ```
+-- {
+--     prompt = "who are you?",
+--     status = "success/failed",
+--     reference = "123",
+--     starttime = "1754705621248",
+--     endtime = "1754705610148",
+--     data = "{"attestation":"","result":"\nI am Gemma, an open-weights AI assistant."}",
+--     error_code = "400", // has this field when the request failed
+--     error_message = "Invalid request format" // has this field when the request failed
+-- }
+-- ```
+-- 
+-- Additional Notes:
+-- - Ensure that the `APUS_ROUTER` is correctly set to your APUS service
+-- - Ensure your are useing YOUR_PROCESS_ID in the frontend API calls
+-- - You can check CREDITS BALANCE by querying the APUS_ROUTER Patch API
+--  `GET /{APUS_ROUTER}~process@1.0/now/cache/credits/{your_process_id}/serialize~json@1.0`
+-- http://72.46.85.207:8734/D0na6AspYVzZnZNa7lQHnBt_J92EldK_oFtEPLjIexo~process@1.0/now/cache/credits/sNWrdfUcR9kBpRPPPnJKFlel4j_z2rJ89PStNXITMto/serialize~json@1.0
+end
+end
+
+do
+local _ENV = _ENV
+package.preload[ "installer" ] = function( ... ) local arg = _G.arg;
+-- AO Package Manager for easy installation of packages in ao processes
+-- This blueprint fetches the latest APM client from the APM registry and installs it
+-------------------------------------------------------------------------
+--      ___      .______   .___  ___.     __       __    __       ___
+--     /   \     |   _  \  |   \/   |    |  |     |  |  |  |     /   \
+--    /  ^  \    |  |_)  | |  \  /  |    |  |     |  |  |  |    /  ^  \
+--   /  /_\  \   |   ___/  |  |\/|  |    |  |     |  |  |  |   /  /_\  \
+--  /  _____  \  |  |      |  |  |  |  __|  `----.|  `--'  |  /  _____  \
+-- /__/     \__\ | _|      |__|  |__| (__)_______| \______/  /__/     \__\
+--
+---------------------------------------------------------------------------
+-- APM Registry source code: https://github.com/betteridea-dev/ao-package-manager
+-- CLI tool for managing packages: https://www.npmjs.com/package/apm-tool
+-- Web UI for browsing & publishing packages: https://apm.betteridea.dev
+-- Built with ❤️ by BetterIDEa
+
+
+local apm_id = "RLvG3tclmALLBCrwc17NqzNFqZCrUf3-RKZ5v8VRHiU"
+
+function Hexencode(str)
+    return (str:gsub(".", function(char) return string.format("%02x", char:byte()) end))
+end
+
+function Hexdecode(hex)
+    return (hex:gsub("%x%x", function(digits) return string.char(tonumber(digits, 16)) end))
+end
+
+-- common error handler
+function HandleRun(func, msg)
+    local ok, err = pcall(func, msg)
+    if not ok then
+        local clean_err = err:match(":%d+: (.+)") or err
+        print(msg.Action .. " - " .. err)
+        -- if not msg.Target == ao.id then
+        ao.send({
+            Target = msg.From,
+            Data = clean_err,
+            Result = "error"
+        })
+        -- end
+    end
+end
+
+local function InstallResponseHandler(msg)
+    local from = msg.From
+    if not from == apm_id then
+        print("Attempt to update from illegal source")
+        return
+    end
+
+    if not msg.Result == "success" then
+        print("Update failed: " .. msg.Data)
+        return
+    end
+
+    local source = msg.Data
+    local version = msg.Version
+
+    if source then
+        source = Hexdecode(source)
+    end
+
+    local func, err = load(string.format([[
+        local function _load()
+            %s
+        end
+        -- apm = _load()
+        _load()
+    ]], source))
+    if not func then
+        error("Error compiling load function: " .. err)
+    end
+    func()
+
+    apm._version = version
+    -- print("✅ Installed APM v:" .. version)
+end
+
+Handlers.once(
+    "APM.UpdateResponse",
+    Handlers.utils.hasMatchingTag("Action", "APM.UpdateResponse"),
+    function(msg)
+        HandleRun(InstallResponseHandler, msg)
+    end
+)
+
+Send({
+    Target = apm_id,
+    Action = "APM.Update"
+})
+print("📦 Loading APM...")
+end
+end
+
+do
+local _ENV = _ENV
 package.preload[ "libs.assertions" ] = function( ... ) local arg = _G.arg;
 ---@diagnostic disable: undefined-global
 local utils = require('utils.utils')
@@ -2323,6 +2559,7 @@ local token = require('libs.token')
 local strategy = require('libs.strategy')
 local assertions = require('libs.assertions')
 local json = require('json')
+local apus_agent = require('apus_agent')
 
 -- Agent State
 Status = Status or enums.AgentStatus.ACTIVE
