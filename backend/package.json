@@ -3,7 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "start": "bun run index.ts"
+    "dev": "bun run --hot index.ts",
+    "build": "bun build --minify --target=bun index.ts --outfile=server.js",
+    "start": "bun run server.js"
   },
   "devDependencies": {
     "@types/bun": "latest"

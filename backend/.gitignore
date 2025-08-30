@@ -5,4 +5,5 @@
 .env*
 node_modules
 dist
-bun.lockb
+bun.lock
+server.js
