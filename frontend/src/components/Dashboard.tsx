@@ -20,6 +20,7 @@ import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { RecommendButton } from "./recommendation";
+import { getUserAgents, type AgentRecord } from "../services/aoService";
 
 // Minimal pool type used by the UI
 interface Pool {
@@ -46,6 +47,11 @@ export default function Dashboard() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [loadingPools, setLoadingPools] = useState(false);
   const [poolsError, setPoolsError] = useState<string | null>(null);
+
+  // State for agents
+  const [agents, setAgents] = useState<AgentRecord[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -234,6 +240,39 @@ export default function Dashboard() {
       controller.abort();
     };
   }, [fetchPools]);
+
+  // Fetch agents when agents tab is active
+  useEffect(() => {
+    if (activeTab !== "agents") return;
+
+    const fetchAgents = async () => {
+      setLoadingAgents(true);
+      setAgentsError(null);
+
+      try {
+        // Get user address from wallet if available
+        let userAddress;
+        try {
+          if (window.arweaveWallet) {
+            userAddress = await window.arweaveWallet.getActiveAddress();
+          }
+        } catch (error) {
+          console.log("Could not get wallet address:", error);
+        }
+
+        const userAgents = await getUserAgents(userAddress);
+        console.log("Fetched user agents:", userAgents);
+        setAgents(userAgents);
+      } catch (error) {
+        console.error("Failed to fetch agents:", error);
+        setAgentsError("Failed to load agents");
+      } finally {
+        setLoadingAgents(false);
+      }
+    };
+
+    fetchAgents();
+  }, [activeTab]);
 
   const deriveApyPct = useMemo(
     () =>
@@ -497,6 +536,16 @@ export default function Dashboard() {
             >
               Find Yields
             </button>
+            <button
+              onClick={() => setActiveTab("agents")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "agents"
+                  ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                  : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
+              }`}
+            >
+              My Agents
+            </button>
           </div>
 
           <div className="flex items-center mb-1">
@@ -504,66 +553,71 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Token Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {displayTokenCards.map((token, index) => (
-            <Card
-              key={index}
-              className="bg-white/80 gradient-card w-full border-none"
-            >
-              <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
-                      <div className="flex">
-                        <img
-                          src={token?.logo}
-                          alt={token?.symbol}
-                          className="w-5 h-5 rounded-full"
-                        />
-                        <img
-                          src={token?.logo2}
-                          alt={token?.symbol}
-                          className="w-5 h-5 rounded-full -translate-x-2"
-                        />
+        {/* Token Cards - Only show for strategies and find-yields tabs */}
+        {(activeTab === "strategies" || activeTab === "find-yields") && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {displayTokenCards.map((token, index) => (
+              <Card
+                key={index}
+                className="bg-white/80 gradient-card w-full border-none"
+              >
+                <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
+                        <div className="flex">
+                          <img
+                            src={token?.logo}
+                            alt={token?.symbol}
+                            className="w-5 h-5 rounded-full"
+                          />
+                          <img
+                            src={token?.logo2}
+                            alt={token?.symbol}
+                            className="w-5 h-5 rounded-full -translate-x-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
+                        <span className="text-base">
+                          {/* {token?.amount} */} {token?.symbol}
+                        </span>
+                        <span className="text-[#7e868c] text-sm">
+                          {token?.value}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
-                      <span className="text-base">
-                        {/* {token?.amount} */} {token?.symbol}
-                      </span>
-                      <span className="text-[#7e868c] text-sm">
-                        {token?.value}
-                      </span>
+                    <div className="flex flex-col items-end justify-end font-semibold">
+                      <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
+                        {token?.tvl}
+                      </div>
+                      <div className="text-[#7e868c] text-sm">
+                        {token?.market_cap}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end justify-end font-semibold">
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
-                      {token?.tvl}
+                  <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
+                    <div className="text-[#7e868c] text-xs font-semibold">
+                      {token?.protocol}
                     </div>
-                    <div className="text-[#7e868c] text-sm">
-                      {token?.market_cap}
+                    <div className="text-[#7e868c] text-xs font-semibold">
+                      <span className="text-[#5CAB28]">{token?.apy}</span> APY
                     </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
 
-                <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
-                  <div className="text-[#7e868c] text-xs font-semibold">
-                    {token?.protocol}
-                  </div>
-                  <div className="text-[#7e868c] text-xs font-semibold">
-                    <span className="text-[#5CAB28]">{token?.apy}</span> APY
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Filter Tabs for Find Yields */}
-        {activeTab === "find-yields" && (
+        {/* Strategies and Find Yields Content */}
+        {(activeTab === "strategies" || activeTab === "find-yields") && (
+          <>
+            {/* Filter Tabs for Find Yields */}
+            {activeTab === "find-yields" && (
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
             <div className="flex flex-wrap gap-2 sm:gap-4">
               <Button
@@ -993,6 +1047,104 @@ export default function Dashboard() {
             </svg>
           </Button>
         </div>
+          </>
+        )}
+
+        {/* Agents Content */}
+        {activeTab === "agents" && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A2228] dark:text-[#F5FBFF]">
+                My Agents
+              </h2>
+              <div className="text-sm text-[#565E64] dark:text-[#95A0A6]">
+                {agents.length} agent{agents.length !== 1 ? 's' : ''} found
+              </div>
+            </div>
+
+            {loadingAgents && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A2228] dark:border-[#F5FBFF]"></div>
+              </div>
+            )}
+
+            {agentsError && (
+              <div className="text-center py-8">
+                <p className="text-red-500">{agentsError}</p>
+              </div>
+            )}
+
+            {!loadingAgents && !agentsError && agents.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-[#565E64] dark:text-[#95A0A6] mb-4">
+                  <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-lg font-medium mb-2">No agents found</p>
+                  <p className="text-sm">Deploy your first agent using the recommendation system</p>
+                </div>
+                <RecommendButton className="animate-none" />
+              </div>
+            )}
+
+            {!loadingAgents && !agentsError && agents.length > 0 && (
+              <div className="grid gap-4">
+                {agents.map((agent) => (
+                  <Link
+                    key={agent.process_id}
+                    to={`/agent/${agent.process_id}`}
+                    className="block"
+                  >
+                    <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] hover:scale-105 transition-all duration-200 shadow-lg cursor-pointer">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white dark:text-[#1A2228]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-[#1A2228] dark:text-[#F5FBFF]">
+                                Agent #{agent.process_id.slice(-8)}
+                              </h3>
+                              <p className="text-sm text-[#565E64] dark:text-[#95A0A6]">
+                                {agent.config.StrategyType} • {agent.config.Dex}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge className={`rounded-lg font-medium ${
+                              agent.status === 'active' 
+                                ? 'bg-gradient-to-br from-green-50 to-green-100 text-green-800 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300'
+                                : agent.status === 'ready'
+                                ? 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300'
+                                : 'bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-800 dark:from-yellow-900/20 dark:to-yellow-800/20 dark:text-yellow-300'
+                            }`}>
+                              {agent.status}
+                            </Badge>
+                            <div className="text-xs text-[#565E64] dark:text-[#95A0A6] mt-1">
+                              Created: {new Date(agent.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center space-x-4 text-sm text-[#565E64] dark:text-[#95A0A6]">
+                          <span>Conversion: {agent.config.ConversionPercentage}%</span>
+                          <span>Slippage: {agent.config.Slippage}%</span>
+                          {agent.config.RunIndefinitely ? (
+                            <span>Run: Indefinitely</span>
+                          ) : (
+                            <span>End: {new Date(agent.config.EndDate * 1000).toLocaleDateString()}</span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <DashboardFooter />
