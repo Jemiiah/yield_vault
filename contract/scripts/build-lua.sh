@@ -6,7 +6,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Color codes for output
 RED='\033[0;31m'    # Red color for errors
 GREEN='\033[0;32m'  # Green color for success messages
+YELLOW='\033[0;33m' # Yellow color for info
 NC='\033[0m'        # No Color (reset to default)
+
+# Check if process name is provided
+PROCESS_NAME="${1:-main}"
+if [ "$PROCESS_NAME" != "main" ] && [ "$PROCESS_NAME" != "manager" ]; then
+    echo -e "${RED}Error: Process name must be 'main' or 'manager'. Got: '$PROCESS_NAME'${NC}"
+    echo "Usage: $0 [main|manager]"
+    exit 1
+fi
+
+echo -e "${YELLOW}Building process: $PROCESS_NAME${NC}"
 
 # Set variables for directories
 SOURCE_DIR="$SCRIPT_DIR/../src"
@@ -22,11 +33,17 @@ if [ ! -d "$SOURCE_DIR" ]; then
     exit 1
 fi
 
-# Clean previous builds
-rm -rf "$BUILD_DIR"
-
-# Create build directories
+# Create build directory if it doesn't exist
 mkdir -p "$BUILD_DIR"
+
+# Define output file path
+OUTPUT_FILE="$BUILD_DIR/${PROCESS_NAME}-process.lua"
+
+# Remove only the specific process file if it exists
+if [ -f "$OUTPUT_FILE" ]; then
+    echo -e "${YELLOW}Removing previous build: $OUTPUT_FILE${NC}"
+    rm "$OUTPUT_FILE"
+fi
 
 # Check if there are any .lua files in the src directory
 LUA_FILES=$(find "$SOURCE_DIR" -path "$SOURCE_DIR/test" -prune -o -type f -name "*.lua" -print)
@@ -35,10 +52,10 @@ if [ -z "$LUA_FILES" ]; then
     exit 1
 fi
 
-# Find the main Lua file (assuming it's named 'main.lua')
-MAIN_LUA_FILE=$(find "$SOURCE_DIR" -path "$SOURCE_DIR/test" -prune -o -type f -name "main.lua" -print | head -n 1)
+# Find the specified Lua file
+MAIN_LUA_FILE=$(find "$SOURCE_DIR" -path "$SOURCE_DIR/test" -prune -o -type f -name "${PROCESS_NAME}.lua" -print | head -n 1)
 if [ -z "$MAIN_LUA_FILE" ]; then
-    echo -e "${RED}Error: Main Lua file 'main.lua' not found in '$SOURCE_DIR' excluding '$SOURCE_DIR/test'.${NC}"
+    echo -e "${RED}Error: Lua file '${PROCESS_NAME}.lua' not found in '$SOURCE_DIR' excluding '$SOURCE_DIR/test'.${NC}"
     exit 1
 fi
 
@@ -58,17 +75,18 @@ while IFS= read -r file; do
     module_path="${relative_path%.lua}"
     # Replace '/' with '.'
     module_name="${module_path//\//.}"
-    # Exclude the main module (since it's specified separately with -s)
-    if [ "$module_name" != "main" ]; then
+    # Exclude the target process module (since it's specified separately with -s)
+    if [ "$module_name" != "$PROCESS_NAME" ]; then
         MODULE_LIST+=("$module_name")
     fi
 done < <(find . -type f -name "*.lua")
 
 # Use amalg.lua to combine Lua files
-if ! amalg.lua -s "$MAIN_LUA_FILE" -o ../build/process.lua "${MODULE_LIST[@]}" ; then
+RELATIVE_OUTPUT_FILE="../build/${PROCESS_NAME}-process.lua"
+if ! amalg.lua -s "$MAIN_LUA_FILE" -o "$RELATIVE_OUTPUT_FILE" "${MODULE_LIST[@]}" ; then
     echo -e "${RED}Error: 'amalg.lua' command failed.${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}Build finished.${NC}"
+echo -e "${GREEN}Build finished: $OUTPUT_FILE${NC}"
 exit 0

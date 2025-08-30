@@ -42,6 +42,9 @@ SwappedUpToDate = SwappedUpToDate or nil
 FeeProcessId = FeeProcessId or constants.FEE_PROCESS_ID
 AgentVersion = AgentVersion or ao.env.Process.Tags["Agent-Version"] or constants.AGENT_VERSION
 
+-- User info
+AgentOwner = AgentOwner or ao.env.Process.Tags["Agent-Owner"]
+
 -- Staged LP flow state (Credit/Debit driven)
 LPFlowActive = LPFlowActive or false
 LPFlowState = LPFlowState or nil -- enums.LPFlowState
@@ -261,7 +264,7 @@ Handlers.add("Credit-Notice", "Credit-Notice",
                 LPFlowState = nil
                 LPFlowPending = false
                 ao.send({
-                    Target = Owner,
+                    Target = AgentOwner,
                     Action = "Refund-Detected",
                     Data = "Refund received; halting auto-restart",
                     Tags = {
@@ -278,7 +281,7 @@ Handlers.add("Credit-Notice", "Credit-Notice",
             if not utils.isWithinActiveWindow(now) then
                 token.transferToSelf(base, quantity)
                 ao.send({
-                    Target = Owner,
+                    Target = AgentOwner,
                     Action = "Strategy-Skipped-Time-Window",
                     Data = "Base token credit received but outside active time window; returned funds to owner",
                     Tags = {
@@ -320,7 +323,7 @@ Handlers.add("Credit-Notice", "Credit-Notice",
                 return
             end
 
-            ao.send({ Target = Owner, Action = "Swap-Completed", Data = "Swap completed: tokenOut=" .. tostring(LPFlowTokenOutId) .. ", qty=" .. tostring(resolvedQty) })
+            ao.send({ Target = AgentOwner, Action = "Swap-Completed", Data = "Swap completed: tokenOut=" .. tostring(LPFlowTokenOutId) .. ", qty=" .. tostring(resolvedQty) })
             LPFlowTokenOutAmount = resolvedQty
             print("lpSendTokenToPool: " .. tostring(LPFlowTokenOutId) .. " " .. tostring(resolvedQty) .. " " .. tostring(LPFlowAoAmount) .. " " .. tostring(resolvedQty))
             strategy.lpSendTokenToPool(LPFlowDex, LPFlowPoolId, LPFlowTokenOutId, resolvedQty, LPFlowAoAmount, resolvedQty)
@@ -615,5 +618,5 @@ print("Token Out: " .. TokenOut)
 print("Base Token: " .. (BaseToken or constants.AO_PROCESS_ID))
 print("DEX: " .. Dex)
 print("Pool Id Override: " .. tostring(PoolIdOverride))
-print("owner: " .. Owner)
+print("owner: " .. AgentOwner)
 print("Process ID: " .. ao.id)

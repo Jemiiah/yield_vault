@@ -67,7 +67,7 @@ end
 
 -- Check wallet permission
 function mod.checkWalletForPermission(msg, errorMessage)
-    assert(ao.id == msg.From or Owner == msg.From,
+    assert(ao.id == msg.From or Owner == msg.From or AgentOwner == msg.From,
         errorMessage or "Wallet does not have permission to perform this action.")
 end
 

@@ -7,6 +7,5 @@ PROJECT_ROOT="$SCRIPT_DIR/.."
 # Change to project root
 cd "$PROJECT_ROOT" || exit 1
 
-# Deploy both processes
-echo "Deploying both main and manager processes..."
-aoform apply -f processes.yaml
+# Deploy main process
+aoform apply -f processes-main.yaml
