@@ -1,4 +1,4 @@
-import { message, result, dryrun } from "@permaweb/aoconnect";
+import { message, result, dryrun, createDataItemSigner } from "@permaweb/aoconnect";
 import { MANAGER_CONTRACT } from "../constants/yao_process";
 import type {
   RiskAssessmentData,
