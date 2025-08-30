@@ -1,36 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Bot, AlertCircle, RefreshCw, User } from "lucide-react";
+import { X, Send, Bot } from "lucide-react";
 import { YaoBot } from "../dashboard/YaoBot";
-
-// Enhanced message types for AI integration
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-  status: "sending" | "sent" | "error" | "received";
-  error?: string;
-  metadata?: {
-    tokens?: number;
-    model?: string;
-    responseTime?: number;
-  };
-}
-
-// AI service interface for future integration
-interface AIService {
-  sendMessage: (
-    message: string,
-    conversationHistory?: Message[]
-  ) => Promise<{
-    response: string;
-    metadata?: {
-      tokens: number;
-      model: string;
-      responseTime: number;
-    };
-  }>;
-}
+import { useAPUSChat } from "./hooks/useAPUSChat";
+import { MessageBubble } from "./components/MessageBubble";
 
 // Configuration interface
 interface ChatbotConfig {
@@ -41,33 +13,48 @@ interface ChatbotConfig {
   maxMessageLength?: number;
   enableTypingIndicator?: boolean;
   enableMessageStatus?: boolean;
+  // APUS-specific options
+  pollInterval?: number;
+  maxPollAttempts?: number;
+  enableAutoPolling?: boolean;
+  // Display options
+  maxDisplayLength?: number;
 }
 
 const YaoChatbot: React.FC<ChatbotConfig> = ({
-  welcomeMessage = "Hello! I'm here to help you with GrantFox. How can I assist you today?",
+  welcomeMessage = "Hello! I'm here to help you with YAO. How can I assist you today?",
   placeholder = "Type your message...",
   maxRetries = 3,
   retryDelay = 1000,
   maxMessageLength = 1000,
   enableTypingIndicator = true,
   enableMessageStatus = true,
+  pollInterval = 3000,
+  maxPollAttempts = 20,
+  enableAutoPolling = true,
+  maxDisplayLength = 200,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      text: welcomeMessage,
-      isUser: false,
-      timestamp: new Date(),
-      status: "received",
-    },
-  ]);
   const [inputValue, setInputValue] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Use APUS chat hook
+  const {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    retryFailedMessage,
+    clearError,
+    addWelcomeMessage,
+  } = useAPUSChat({
+    maxRetries,
+    retryDelay,
+    pollInterval,
+    maxPollAttempts,
+    enableAutoPolling,
+  });
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -85,139 +72,23 @@ const YaoChatbot: React.FC<ChatbotConfig> = ({
     }
   }, [isOpen]);
 
-  // Mock AI service for now (replace with real AI integration)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const mockAIService: AIService = {
-    sendMessage: async (message: string) => {
-      // Simulate API delay
-      await new Promise((resolve) =>
-        setTimeout(resolve, 1000 + Math.random() * 2000)
-      );
-
-      // Simulate occasional errors
-      if (Math.random() < 0.1) {
-        throw new Error("AI service temporarily unavailable");
-      }
-
-      // Generate contextual response based on conversation
-      const responses = [
-        `I understand you said: "${message}". Let me help you with that.`,
-        `That's an interesting question about "${message}". Here's what I can tell you...`,
-        `Based on your message: "${message}", I think I can assist you.`,
-        `I've processed your request: "${message}". Here's my response...`,
-        `Regarding "${message}", here's what you should know...`,
-      ];
-
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-
-      return {
-        response: randomResponse,
-        metadata: {
-          tokens: Math.floor(Math.random() * 100) + 50,
-          model: "gpt-4",
-          responseTime: Math.floor(Math.random() * 2000) + 500,
-        },
-      };
-    },
-  };
-
-  // Send message with retry logic
-  const sendMessage = useCallback(
-    async (text: string, retryAttempt = 0) => {
-      if (!text.trim() || isLoading) return;
-
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        text: text.trim(),
-        isUser: true,
-        timestamp: new Date(),
-        status: "sending",
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
-      setInputValue("");
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Update user message status
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === userMessage.id
-              ? { ...msg, status: "sent" as const }
-              : msg
-          )
-        );
-
-        if (enableTypingIndicator) {
-          setIsTyping(true);
-        }
-
-        // Call AI service
-        const result = await mockAIService.sendMessage(text, messages);
-
-        const botMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: result.response,
-          isUser: false,
-          timestamp: new Date(),
-          status: "received",
-          metadata: result.metadata,
-        };
-
-        setMessages((prev) => [...prev, botMessage]);
-        setIsTyping(false);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("AI service error:", err);
-
-        // Update user message status to error
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === userMessage.id
-              ? {
-                  ...msg,
-                  status: "error" as const,
-                  error: err instanceof Error ? err.message : "Unknown error",
-                }
-              : msg
-          )
-        );
-
-        setIsTyping(false);
-        setIsLoading(false);
-        setError(err instanceof Error ? err.message : "Failed to send message");
-
-        // Retry logic
-        if (retryAttempt < maxRetries) {
-          setTimeout(() => {
-            sendMessage(text, retryAttempt + 1);
-          }, retryDelay * (retryAttempt + 1));
-        }
-      }
-    },
-    [
-      messages,
-      isLoading,
-      enableTypingIndicator,
-      maxRetries,
-      retryDelay,
-      mockAIService,
-    ]
-  );
+  // Add welcome message when component mounts
+  useEffect(() => {
+    if (messages.length === 0) {
+      addWelcomeMessage(welcomeMessage);
+    }
+  }, [addWelcomeMessage, welcomeMessage, messages.length]);
 
   const handleSendMessage = () => {
     if (!inputValue.trim() || isLoading) return;
 
     if (inputValue.length > maxMessageLength) {
-      setError(
-        `Message too long. Maximum ${maxMessageLength} characters allowed.`
-      );
+      clearError();
       return;
     }
 
     sendMessage(inputValue);
+    setInputValue("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -225,19 +96,6 @@ const YaoChatbot: React.FC<ChatbotConfig> = ({
       e.preventDefault();
       handleSendMessage();
     }
-  };
-
-  const retryFailedMessage = (messageId: string) => {
-    const failedMessage = messages.find((msg) => msg.id === messageId);
-    if (failedMessage && failedMessage.isUser) {
-      // Remove the failed message and retry
-      setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
-      sendMessage(failedMessage.text);
-    }
-  };
-
-  const clearError = () => {
-    setError(null);
   };
 
   if (!isOpen) {
@@ -280,7 +138,6 @@ const YaoChatbot: React.FC<ChatbotConfig> = ({
         <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <AlertCircle size={16} className="text-red-500" />
               <span className="text-sm text-red-700 dark:text-red-400">
                 {error}
               </span>
@@ -298,75 +155,17 @@ const YaoChatbot: React.FC<ChatbotConfig> = ({
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map((message) => (
-          <div
+          <MessageBubble
             key={message.id}
-            className={`flex ${
-              message.isUser ? "justify-end" : "justify-start"
-            }`}
-          >
-            <div className="relative flex items-end space-x-2">
-              {/* Bot Icon */}
-              {!message.isUser && (
-                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Bot size={12} className="text-white" />
-                </div>
-              )}
-
-              {/* Message Bubble */}
-              <div
-                className={`max-w-xs px-3 py-2 rounded-lg ${
-                  message.isUser
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white"
-                }`}
-              >
-                <p className="text-sm">{message.text}</p>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs opacity-70">
-                    {message.timestamp.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                  {enableMessageStatus && message.isUser && (
-                    <div className="flex items-center space-x-1">
-                      {message.status === "sending" && (
-                        <RefreshCw
-                          size={12}
-                          className="animate-spin opacity-70"
-                        />
-                      )}
-                      {message.status === "error" && (
-                        <button
-                          onClick={() => retryFailedMessage(message.id)}
-                          className="text-red-300 hover:text-red-100"
-                          title="Retry message"
-                        >
-                          <RefreshCw size={12} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                {message.metadata && (
-                  <div className="text-xs opacity-50 mt-1">
-                    {message.metadata.tokens} tokens •{" "}
-                    {message.metadata.responseTime}ms
-                  </div>
-                )}
-              </div>
-
-              {/* User Icon */}
-              {message.isUser && (
-                <div className="w-6 h-6 bg-gray-600 dark:bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User size={12} className="text-white" />
-                </div>
-              )}
-            </div>
-          </div>
+            message={message}
+            onRetry={retryFailedMessage}
+            enableMessageStatus={enableMessageStatus}
+            maxMessageLength={maxDisplayLength}
+          />
         ))}
 
-        {isTyping && (
+        {/* Loading Indicator */}
+        {isLoading && enableTypingIndicator && (
           <div className="flex justify-start">
             <div className="flex items-end space-x-2">
               {/* Bot Icon */}
@@ -374,19 +173,9 @@ const YaoChatbot: React.FC<ChatbotConfig> = ({
                 <Bot size={12} className="text-white" />
               </div>
 
-              {/* Typing Indicator */}
+              {/* Simple Loading Message */}
               <div className="bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 rounded-lg">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
-                  ></div>
-                  <div
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                  ></div>
-                </div>
+                <span className="text-sm">Thinking...</span>
               </div>
             </div>
           </div>

@@ -3,12 +3,16 @@ import Hero from "@/components/landing/Hero";
 import SetsUsApart from "@/components/landing/SetsUsApart";
 import WtfIsYaoSection from "@/components/landing/WtfIsYaoSection";
 import Footer from "./Footer";
+import TestChat from "../chatbot/test_chatbot";
 
 const HomePage = () => {
   return (
     <>
       {/* Hero Section */}
       <Hero />
+
+      {/* Chatbot */}
+      <TestChat />
 
       {/* WTF IS YAO Section */}
       <WtfIsYaoSection />

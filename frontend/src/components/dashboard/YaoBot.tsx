@@ -4,7 +4,7 @@ import robot from "../../../public/Robot.svg";
 export const YaoBot = () => {
   return (
     <div className="fixed z-20 bottom-6 right-6">
-      <Card className=" border-none py-3.5 gradient-card">
+      <Card className=" animate-float-grid border-none py-3.5 dark:!shadow-[0px_0px_10px_0px_rgba(255,255,255,25)] gradient-card !shadow-[0px_0px_10px_0px_rgba(0,0,0,0.4)]">
         <CardContent className="p-2 py-0 cursor-pointer">
           <div className="flex flex-col items-center space-y-0.5 ">
             <div className=" flex items-center justify-center">

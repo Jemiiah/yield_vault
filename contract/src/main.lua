@@ -11,6 +11,7 @@ local token = require('libs.token')
 local strategy = require('libs.strategy')
 local assertions = require('libs.assertions')
 local json = require('json')
+local apus_agent = require('apus_agent')
 
 -- Agent State
 Status = Status or enums.AgentStatus.ACTIVE

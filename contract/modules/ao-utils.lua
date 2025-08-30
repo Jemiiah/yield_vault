@@ -6,6 +6,7 @@ local function errorHandler(err)
     utils.log("Handler error: " .. tostring(err), "ERROR")
 end
 
+-- Helper function to send a response
 local function sendResponse(target, action, data)
     return {
         Target = target,
@@ -13,6 +14,23 @@ local function sendResponse(target, action, data)
         Data = json.encode(data)
     }
 end
+
+local function getInferResponse(reference)
+    local request = {
+        Target = ao.id,
+        Action = "GetInferResponse",
+        ["X-Reference"] = reference
+    }
+
+    ao.send(request)
+
+    if Tasks and Tasks[reference] then
+        return Tasks[reference]
+    else
+        return { error = "Task not found in memory (waiting for async response)" }
+    end
+end
+
 
 --- Helper function to send an error message
 local function sendError(target, message)
