@@ -30,11 +30,18 @@ if ! "$SCRIPT_DIR/check_deps.sh"; then
     fi
 fi
 
-# Step 3: Build the project
-if ! "$SCRIPT_DIR/build-lua.sh"; then
-    echo -e "${RED}Build failed.${NC}"
+# Step 3: Build both processes
+echo -e "${YELLOW}Building main process...${NC}"
+if ! "$SCRIPT_DIR/build-lua.sh" main; then
+    echo -e "${RED}Main process build failed.${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}Build completed successfully.${NC}"
+echo -e "${YELLOW}Building manager process...${NC}"
+if ! "$SCRIPT_DIR/build-lua.sh" manager; then
+    echo -e "${RED}Manager process build failed.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}Build completed successfully for both processes.${NC}"
 exit 0

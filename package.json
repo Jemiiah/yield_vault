@@ -12,9 +12,13 @@
   },
   "license": "MIT",
   "scripts": {
+    "process:build": "cd ./contract && ./scripts/build.sh",
+    "process:build:main": "cd ./contract && ./scripts/build-main.sh",
+    "process:build:manager": "cd ./contract && ./scripts/build-manager.sh",
     "process:deploy": "cd ./contract && ./scripts/deploy.sh",
-    "process:test": "cd ./contract && ./scripts/test.sh",
-    "process:build": "cd ./contract && ./scripts/build.sh"
+    "process:deploy:main": "cd ./contract && ./scripts/deploy-main.sh",
+    "process:deploy:manager": "cd ./contract && ./scripts/deploy-manager.sh",
+    "process:test": "cd ./contract && ./scripts/test.sh"
   },
   "type": "module",
   "dependencies": {

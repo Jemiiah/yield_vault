@@ -26,7 +26,7 @@ function mod.transferToSelf(tokenId, quantity)
     ao.send({
         Target = tokenId,
         Action = "Transfer",
-        Recipient = Owner,
+        Recipient = AgentOwner,
         Quantity = quantity
     })
 end
