@@ -18,7 +18,9 @@
     "process:deploy": "cd ./contract && ./scripts/deploy.sh",
     "process:deploy:main": "cd ./contract && ./scripts/deploy-main.sh",
     "process:deploy:manager": "cd ./contract && ./scripts/deploy-manager.sh",
-    "process:test": "cd ./contract && ./scripts/test.sh"
+    "process:test": "cd ./contract && ./scripts/test.sh",
+    "set-eval-data": "node scripts/set-eval-data.js",
+    "spawn-agent": "node scripts/spawn-agent.js"
   },
   "type": "module",
   "dependencies": {
