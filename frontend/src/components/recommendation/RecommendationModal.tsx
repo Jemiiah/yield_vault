@@ -73,12 +73,12 @@ export default function RecommendationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#f8f7f4] dark:bg-[#0F1419] border border-[#D6EEF6] dark:border-[#192127]">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#F8F7F4] dark:bg-[#0F1419] border border-[#EAEAEA] dark:border-[#192127] rounded-lg">
         <div className="p-6">
           {currentStep === "form" && (
             <>
               {error && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <div className="mb-4 p-4 rounded-lg bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800">
                   <div className="flex items-start">
                     <div className="flex-shrink-0">
                       <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -102,11 +102,11 @@ export default function RecommendationModal({
 
           {currentStep === "loading" && (
             <div className="flex flex-col items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A2228] dark:border-[#F5FBFF] mb-4"></div>
+              <h3 className="text-lg font-semibold text-[#1A2228] dark:text-[#F5FBFF] mb-2">
                 Getting AI Recommendations
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center">
+              <p className="text-[#565E64] dark:text-[#95A0A6] text-center">
                 Analyzing your risk profile and finding the best pools...
               </p>
             </div>
