@@ -11,8 +11,17 @@ import verified from "../../public/verified.svg";
 import ao_token from "../../public/ao_logo.svg";
 import back_btn from "../../public/back.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
+import {
+  createDataItemSigner,
+  message,
+  result
+} from "@permaweb/aoconnect";
+
+import {VAULT, AO_TOKEN} from "../constants/yao_process";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function StrategyDetail() {
+  const queryClient = useQueryClient();
   //   const { id } = useParams<{ id: string }>();
 
   // Use the id to fetch or identify the specific strategy
@@ -37,6 +46,92 @@ export default function StrategyDetail() {
     harvestCount: 17,
     walletBalance: "3,450.609",
   };
+
+  // integrate deposit and withdraw logic
+
+  const deposit = useMutation({
+		mutationKey: ["Transfer"],
+		mutationFn: async () => {
+			const messageId = await message({
+				process: AO_TOKEN,
+				tags: [
+					{
+						name: "Action",
+						value: "Transfer",
+					},
+					{
+						name: "Recipient",
+						value: VAULT,
+					},
+					{
+						name: "Quantity",
+						value: depositAmount,
+					}
+				],
+				data: "",
+				signer: createDataItemSigner(window.arweaveWallet),
+			});
+
+			const messageResult = await result({
+				process: AO_TOKEN,
+				message: messageId,
+			});
+
+			if (messageResult.Messages[0].Data) {
+				return JSON.parse(messageResult.Messages[0].Data);
+			}
+
+			return undefined;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries();
+		},
+	});
+
+
+  const withdraw = useMutation({
+		mutationKey: ["Withdraw"],
+		mutationFn: async () => {
+			const messageId = await message({
+				process: VAULT,
+				tags: [
+					{
+						name: "Action",
+						value: "Withdraw",
+					},
+					{
+						name: "Token-Id",
+						value: AO_TOKEN,
+					},
+					{
+						name: "Quantity",
+						value: withdrawAmount,
+					}
+				],
+				data: "",
+				signer: createDataItemSigner(window.arweaveWallet),
+			});
+
+			const messageResult = await result({
+				process: VAULT,
+				message: messageId,
+			});
+
+			console.log(messageResult)
+			if (messageResult.Messages[0].Data) {
+				console.log(messageResult.Messages[0].Data)
+				return JSON.parse(messageResult.Messages[0].Data);
+			}
+
+			return undefined;
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries();
+		},
+	});
+
+
+  // end integrate deposit and withdraw logic  
 
   return (
     <div className="min-h-screen bg-[#f8f7f4] dark:bg-[#0F1419]">
@@ -242,6 +337,13 @@ export default function StrategyDetail() {
                   <Button
                     className="w-full !mt-7 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
                     disabled={!(depositAmount || withdrawAmount)}
+                    onClick={() => {
+                      if (depositWithdrawTab === "deposit") {
+                        deposit.mutateAsync();
+                      } else {
+                        withdraw.mutateAsync();
+                      }
+                    }}
                   >
                     {depositWithdrawTab === "deposit" ? "Deposit" : "Withdraw"}
                   </Button>

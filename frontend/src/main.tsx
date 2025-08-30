@@ -8,15 +8,8 @@ import { ConfigProvider } from "antd";
 import { ChatbotProvider } from "./contexts/ChatbotContext.tsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Create a QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+// Create a React Query client
+const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
