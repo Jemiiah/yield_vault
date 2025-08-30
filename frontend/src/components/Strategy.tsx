@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useState, useMemo } from "react";
+import {
+  useCallback,
+  useState,
+  // useMemo
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +22,17 @@ import { VAULT, AO_TOKEN } from "../constants/yao_process";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { getTokenInfo } from "../helpers/token";
-import user_circle from "../../public/user-circle.svg";
+// import user_circle from "../../public/user-circle.svg";
 
 export default function StrategyDetail() {
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
-  const { getPoolById, getStrategyById, strategies, pools } = usePools();
+  const {
+    getPoolById,
+    getStrategyById,
+    // strategies,
+    // pools
+  } = usePools();
 
   // Get the specific pool and strategy data based on the ID from URL
   const pool = id ? getPoolById(id) : undefined;
@@ -32,8 +41,8 @@ export default function StrategyDetail() {
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositWithdrawTab, setDepositWithdrawTab] = useState("deposit");
-  // ADD THIS LINE - Missing activeTab state
   const [activeTab, setActiveTab] = useState("manage");
+  const [isLoading, setIsLoading] = useState(true);
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -80,29 +89,29 @@ export default function StrategyDetail() {
   );
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const fetchedStrategies = useMemo(
-    () =>
-      strategies.map((strategy) => {
-        console.log("strategy in dashboard", strategy);
-        // Find the corresponding pool to get token IDs for logos
+  // const fetchedStrategies = useMemo(
+  //   () =>
+  //     strategies.map((strategy) => {
+  //       console.log("strategy in dashboard", strategy);
+  //       // Find the corresponding pool to get token IDs for logos
 
-        console.log("pools in dashboard XXXXXXXXXXXXXXX", pools);
-        const pool = pools.find(
-          (p) =>
-            p.amm_process === strategy.id ||
-            `${p.token0_ticker || ""}-${p.token1_ticker || ""}` === strategy.id
-        );
+  //       console.log("pools in dashboard XXXXXXXXXXXXXXX", pools);
+  //       const pool = pools.find(
+  //         (p) =>
+  //           p.amm_process === strategy.id ||
+  //           `${p.token0_ticker || ""}-${p.token1_ticker || ""}` === strategy.id
+  //       );
 
-        return {
-          ...strategy,
-          token_icon: getTokenLogo(pool?.token0),
-          token_icon2: getTokenLogo(pool?.token1),
-          verified: verified,
-          protocol_icon: user_circle,
-        };
-      }),
-    [strategies, pools, getTokenLogo]
-  );
+  //       return {
+  //         ...strategy,
+  //         token_icon: getTokenLogo(pool?.token0),
+  //         token_icon2: getTokenLogo(pool?.token1),
+  //         verified: verified,
+  //         protocol_icon: user_circle,
+  //       };
+  //     }),
+  //   [strategies, pools, getTokenLogo]
+  // );
 
   // Fetch logos for pool tokens when component mounts
   React.useEffect(() => {
@@ -111,6 +120,15 @@ export default function StrategyDetail() {
       if (pool.token1) fetchTokenLogo(pool.token1);
     }
   }, [pool, fetchTokenLogo]);
+
+  // Simulate loading state when component mounts
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // Show skeleton for 1 second
+
+    return () => clearTimeout(timer);
+  }, []);
 
   // integrate deposit and withdraw logic
 
@@ -201,12 +219,25 @@ export default function StrategyDetail() {
     return (
       <div className="min-h-screen bg-[#f8f7f4] dark:bg-[#0F1419] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#565E64] mb-4">
-            {!pool ? "Pool not found" : "Loading strategy details..."}
-          </h1>
-          <Link to="/dashboard" className="text-blue-500 hover:underline">
-            Back to Dashboard
-          </Link>
+          {!pool ? (
+            <>
+              <h1 className="text-2xl font-bold text-[#565E64] mb-4">
+                Pool not found
+              </h1>
+              <Link to="/dashboard" className="text-blue-500 hover:underline">
+                Back to Dashboard
+              </Link>
+            </>
+          ) : (
+            <div className="flex flex-col items-center justify-center z-40">
+              <div className="flex justify-center py-8 mb-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#1A2228] dark:border-[#F5FBFF] border-t-transparent"></div>
+              </div>
+              <h1 className="text-2xl font-bold text-[#565E64] mb-4">
+                Loading strategy details...
+              </h1>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -236,8 +267,39 @@ export default function StrategyDetail() {
     return `$${value.toFixed(2)}`;
   };
 
+  // Skeleton loader components
+  const SkeletonLoader = ({ className = "" }: { className?: string }) => (
+    <div
+      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+    ></div>
+  );
+
+  const TabSkeleton = () => (
+    <div className="space-y-6">
+      {/* Header skeleton */}
+      <div className="space-y-4">
+        <SkeletonLoader className="h-8 w-64" />
+        <SkeletonLoader className="h-4 w-full" />
+        <SkeletonLoader className="h-4 w-3/4" />
+        <SkeletonLoader className="h-4 w-1/2" />
+      </div>
+
+      {/* Content skeleton */}
+      <div className="space-y-4">
+        <SkeletonLoader className="h-32 w-full" />
+        <SkeletonLoader className="h-24 w-full" />
+        <SkeletonLoader className="h-20 w-2/3" />
+      </div>
+    </div>
+  );
+
   // Function to render tab content based on activeTab
   const renderTabContent = () => {
+    // Show skeleton loader while data is loading
+    if (isLoading || !pool || !strategy) {
+      return <TabSkeleton />;
+    }
+
     switch (activeTab) {
       case "manage":
         return (
@@ -538,28 +600,6 @@ export default function StrategyDetail() {
           </div>
         );
 
-      case "risks":
-        return (
-          <div>
-            <h3 className="text-xl sm:text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-3 sm:mb-4">
-              Risk Assessment
-            </h3>
-            <div className="space-y-4">
-              <div className="bg-[#F3F3F3] dark:bg-[#141C22] p-4 rounded-xl">
-                <h4 className="font-semibold text-[#565E64] dark:text-[#EAEAEA] mb-2">
-                  Risk Factors
-                </h4>
-                <ul className="list-disc list-inside space-y-2 text-sm text-[#565E64] dark:text-[#EAEAEA]">
-                  <li>Impermanent loss risk due to price divergence</li>
-                  <li>Smart contract risk</li>
-                  <li>Liquidity risk during market volatility</li>
-                  <li>Protocol governance risks</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        );
-
       case "faqs":
         return (
           <div>
@@ -599,6 +639,28 @@ export default function StrategyDetail() {
               <p className="text-sm text-[#565E64] dark:text-[#EAEAEA] text-center py-8">
                 No transactions found for this strategy.
               </p>
+            </div>
+          </div>
+        );
+
+      case "risks":
+        return (
+          <div>
+            <h3 className="text-xl sm:text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-3 sm:mb-4">
+              Risk Assessment
+            </h3>
+            <div className="space-y-6">
+              <div className="bg-[#F3F3F3] dark:bg-[#141C22] p-6 rounded-xl">
+                <h4 className="font-semibold text-[#565E64] dark:text-[#EAEAEA] mb-4">
+                  Risk Factors
+                </h4>
+                <ul className="list-disc list-inside space-y-2 text-sm text-[#565E64] dark:text-[#EAEAEA]">
+                  <li>Impermanent loss risk due to price divergence</li>
+                  <li>Smart contract risk</li>
+                  <li>Liquidity risk during market volatility</li>
+                  <li>Protocol governance risks</li>
+                </ul>
+              </div>
             </div>
           </div>
         );
