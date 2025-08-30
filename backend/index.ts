@@ -13,6 +13,10 @@ app.use(
   })
 );
 
+app.get("/", (c) => {
+  return c.text("Holla!");
+});
+
 app.get("/pools", async (c) => {
   const sourceRoute = Bun.env.SOURCE_ROUTE;
   const headersJson = Bun.env.HEADERS_JSON;

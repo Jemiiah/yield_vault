@@ -3,6 +3,7 @@ import Header from "./components/landing/Header";
 import HomePage from "./components/landing/HomePage";
 import Dashboard from "./components/Dashboard";
 import Strategy from "./components/Strategy";
+import Agent from "./components/Agent";
 import YaoChatbot from "./components/chatbot/YaoChatbot";
 import { PoolProvider } from "./contexts/PoolContext";
 
@@ -20,6 +21,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/strategy/:id" element={<Strategy />} />
+              <Route path="/agent/:id" element={<Agent />} />
             </Routes>
           </main>
 

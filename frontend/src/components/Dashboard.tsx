@@ -21,6 +21,7 @@ import DashboardFooter from "./dashboard/dashboard_footer";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { RecommendButton } from "./recommendation";
 import { usePools } from "../contexts/PoolContext";
+import { getUserAgents, type AgentRecord } from "../services/aoService";
 
 // Minimal pool type used by the UI
 interface Pool {
@@ -52,6 +53,11 @@ export default function Dashboard() {
     loading: loadingPools,
     error: poolsError,
   } = usePools();
+
+  // State for agents
+  const [agents, setAgents] = useState<AgentRecord[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  const [agentsError, setAgentsError] = useState<string | null>(null);
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -187,6 +193,92 @@ export default function Dashboard() {
       },
     [isStableToken, isAOToken, isGameToken]
   );
+
+  const fetchPools = useCallback(async (signal: AbortSignal) => {
+    const API_BASE = "http://localhost:3000";
+    const url = `${API_BASE}/pools`;
+
+    const response = await fetch(url, { signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json().catch(() => null);
+    if (data == null) {
+      const txt = await response.text();
+      try {
+        const parsed = JSON.parse(txt);
+        return parsed;
+      } catch {
+        throw new Error("Bad payload");
+      }
+    }
+    return data;
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoadingPools(true);
+    setPoolsError(null);
+
+    fetchPools(controller.signal)
+      .then((data: unknown) => {
+        type WithItems = { items?: unknown };
+        let arr: Pool[] = [];
+        if (Array.isArray(data)) {
+          arr = data as Pool[];
+        } else if (
+          data &&
+          typeof data === "object" &&
+          Array.isArray((data as WithItems).items)
+        ) {
+          arr = (data as { items: Pool[] }).items;
+        }
+        setPools(arr);
+      })
+      .catch((e) => {
+        if (e.name === "AbortError") return;
+        setPoolsError("Failed to load pools");
+      })
+      .finally(() => {
+        setLoadingPools(false);
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [fetchPools]);
+
+  // Fetch agents when agents tab is active
+  useEffect(() => {
+    if (activeTab !== "agents") return;
+
+    const fetchAgents = async () => {
+      setLoadingAgents(true);
+      setAgentsError(null);
+
+      try {
+        // Get user address from wallet if available
+        let userAddress;
+        try {
+          if (window.arweaveWallet) {
+            userAddress = await window.arweaveWallet.getActiveAddress();
+          }
+        } catch (error) {
+          console.log("Could not get wallet address:", error);
+        }
+
+        const userAgents = await getUserAgents(userAddress);
+        console.log("Fetched user agents:", userAgents);
+        setAgents(userAgents);
+      } catch (error) {
+        console.error("Failed to fetch agents:", error);
+        setAgentsError("Failed to load agents");
+      } finally {
+        setLoadingAgents(false);
+      }
+    };
+
+    fetchAgents();
+  }, [activeTab]);
 
   const deriveApyPct = useMemo(
     () =>
@@ -441,6 +533,16 @@ export default function Dashboard() {
             >
               Find Yields
             </button>
+            <button
+              onClick={() => setActiveTab("agents")}
+              className={`pb-2 px-1 text-xs sm:text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "agents"
+                  ? "border-[#1fadd8] text-[#1A2228] dark:text-[#F5FBFF]"
+                  : "border-transparent text-[#7e868c] hover:text-[#a4a8ab]"
+              }`}
+            >
+              My Agents
+            </button>
           </div>
 
           <div className="flex items-center mb-1">
@@ -448,380 +550,286 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Token Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {displayTokenCards.map((token, index) => (
-            <Card
-              key={index}
-              className="bg-white/80 gradient-card w-full border-none"
-            >
-              <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
-                      <div className="flex">
-                        <img
-                          src={token?.logo}
-                          alt={token?.symbol}
-                          className="w-5 h-5 rounded-full"
-                        />
-                        <img
-                          src={token?.logo2}
-                          alt={token?.symbol}
-                          className="w-5 h-5 rounded-full -translate-x-2"
-                        />
+        {/* Token Cards - Only show for strategies and find-yields tabs */}
+        {(activeTab === "strategies" || activeTab === "find-yields") && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {displayTokenCards.map((token, index) => (
+              <Card
+                key={index}
+                className="bg-white/80 gradient-card w-full border-none"
+              >
+                <CardContent className="p-3 sm:p-4 md:p-5 flex flex-col items-center py-0">
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-10 h-10 bg-[#1a2228] rounded-full flex items-center justify-center">
+                        <div className="flex">
+                          <img
+                            src={token?.logo}
+                            alt={token?.symbol}
+                            className="w-5 h-5 rounded-full"
+                          />
+                          <img
+                            src={token?.logo2}
+                            alt={token?.symbol}
+                            className="w-5 h-5 rounded-full -translate-x-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
+                        <span className="text-base">
+                          {/* {token?.amount} */} {token?.symbol}
+                        </span>
+                        <span className="text-[#7e868c] text-sm">
+                          {token?.value}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] flex flex-col items-center font-semibold">
-                      <span className="text-base">
-                        {/* {token?.amount} */} {token?.symbol}
-                      </span>
-                      <span className="text-[#7e868c] text-sm">
-                        {token?.value}
-                      </span>
+                    <div className="flex flex-col items-end justify-end font-semibold">
+                      <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
+                        {token?.tvl}
+                      </div>
+                      <div className="text-[#7e868c] text-sm">
+                        {token?.market_cap}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-end justify-end font-semibold">
-                    <div className="text-[#1a2228] dark:text-[#FEFEFD] text-base">
-                      {token?.tvl}
+                  <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
+                    <div className="text-[#7e868c] text-xs font-semibold">
+                      {token?.protocol}
                     </div>
-                    <div className="text-[#7e868c] text-sm">
-                      {token?.market_cap}
+                    <div className="text-[#7e868c] text-xs font-semibold">
+                      <span className="text-[#5CAB28]">{token?.apy}</span> APY
                     </div>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between w-full mt-3 sm:mt-4">
-                  <div className="text-[#7e868c] text-xs font-semibold">
-                    {token?.protocol}
-                  </div>
-                  <div className="text-[#7e868c] text-xs font-semibold">
-                    <span className="text-[#5CAB28]">{token?.apy}</span> APY
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Filter Tabs for Find Yields */}
-        {activeTab === "find-yields" && (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
-            <div className="flex flex-wrap gap-2 sm:gap-4">
-              <Button
-                variant="default"
-                size="sm"
-                className="bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
-              >
-                All
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
-              >
-                Dexi
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
-              >
-                Botega
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
-              >
-                Permaswap
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
-              >
-                Liquid Ops
-              </Button>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[#565E64] dark:text-[#95A0A6] hover:bg-none border border-[#EAEAEA] dark:border-[#192127] text-xs sm:text-sm"
-            >
-              <img
-                src={filter}
-                alt="filter"
-                className="w-3 h-3 sm:w-4 sm:h-4"
-              />
-              <span className="ml-1">Filter</span>
-            </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         )}
 
-        {/* Desktop Table View */}
-        <div className="hidden lg:block">
-          <Card className="bg-none border-none px-0">
-            <CardContent className="p-0">
-              <div className="px-4 py-2 text-sm">
-                {loadingPools && (
-                  <span className="text-[#7e868c]">Loading pools…</span>
-                )}
-                {!loadingPools && poolsError && (
-                  <span className="text-red-500">{poolsError}</span>
-                )}
+        {/* Strategies and Find Yields Content */}
+        {(activeTab === "strategies" || activeTab === "find-yields") && (
+          <>
+            {/* Filter Tabs for Find Yields */}
+            {activeTab === "find-yields" && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+                <div className="flex flex-wrap gap-2 sm:gap-4">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
+                  >
+                    Dexi
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
+                  >
+                    Botega
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
+                  >
+                    Permaswap
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] hover:bg-[#ececec95] dark:hover:bg-[#161e2484] text-xs sm:text-sm"
+                  >
+                    Liquid Ops
+                  </Button>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[#565E64] dark:text-[#95A0A6] hover:bg-none border border-[#EAEAEA] dark:border-[#192127] text-xs sm:text-sm"
+                >
+                  <img
+                    src={filter}
+                    alt="filter"
+                    className="w-3 h-3 sm:w-4 sm:h-4"
+                  />
+                  <span className="ml-1">Filter</span>
+                </Button>
               </div>
-              {/* Table Header */}
-              <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
-                <div className="col-span-3">STRATEGY NAME</div>
-                <div className="text-center">APY</div>
-                <div className="text-center">RISK</div>
-                <div className="text-center">TVL</div>
-                <div className="text-center">INFO</div>
-              </div>
+            )}
 
-              {/* Strategy Rows */}
-              {loadingPools
-                ? Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] dark:bg-[#141C22]"
-                    >
-                      {/* Strategy Name Column */}
-                      <div className="flex space-x-3 col-span-3">
-                        <div className="flex">
-                          <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse"></div>
-                          <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse -translate-x-2"></div>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block">
+              <Card className="bg-none border-none px-0">
+                <CardContent className="p-0">
+                  <div className="px-4 py-2 text-sm">
+                    {loadingPools && (
+                      <span className="text-[#7e868c]">Loading pools…</span>
+                    )}
+                    {!loadingPools && poolsError && (
+                      <span className="text-red-500">{poolsError}</span>
+                    )}
+                  </div>
+                  {/* Table Header */}
+                  <div className="grid grid-cols-7 bg-[#F0F0F0] dark:bg-[#182026] rounded-tr-xl rounded-tl-xl gap-4 p-4 text-[#7e868c] text-sm font-medium">
+                    <div className="col-span-3">STRATEGY NAME</div>
+                    <div className="text-center">APY</div>
+                    <div className="text-center">RISK</div>
+                    <div className="text-center">TVL</div>
+                    <div className="text-center">INFO</div>
+                  </div>
+
+                  {/* Strategy Rows */}
+                  {loadingPools
+                    ? Array.from({ length: 3 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className="grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] dark:bg-[#141C22]"
+                        >
+                          {/* Strategy Name Column */}
+                          <div className="flex space-x-3 col-span-3">
+                            <div className="flex">
+                              <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse"></div>
+                              <div className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 animate-pulse -translate-x-2"></div>
+                            </div>
+                            <div className="flex flex-col space-y-2">
+                              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
+                              <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                            </div>
+                          </div>
+
+                          {/* APY Column */}
+                          <div className="text-center flex items-center justify-center">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-12"></div>
+                          </div>
+
+                          {/* Risk Column */}
+                          <div className="text-center flex justify-center">
+                            <div className="flex space-x-1.5">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <div
+                                  key={i}
+                                  className="w-1 h-7 bg-gray-200 dark:bg-gray-700 rounded-sm animate-pulse"
+                                ></div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* TVL Column */}
+                          <div className="text-center flex items-center justify-center">
+                            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                          </div>
+
+                          {/* Info Column */}
+                          <div className="text-center flex justify-center">
+                            <div className="w-4 h-4 md:w-10 md:h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                          </div>
                         </div>
-                        <div className="flex flex-col space-y-2">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
-                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
-                        </div>
-                      </div>
-
-                      {/* APY Column */}
-                      <div className="text-center flex items-center justify-center">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-12"></div>
-                      </div>
-
-                      {/* Risk Column */}
-                      <div className="text-center flex justify-center">
-                        <div className="flex space-x-1.5">
-                          {[1, 2, 3, 4, 5].map((i) => (
-                            <div
-                              key={i}
-                              className="w-1 h-7 bg-gray-200 dark:bg-gray-700 rounded-sm animate-pulse"
-                            ></div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* TVL Column */}
-                      <div className="text-center flex items-center justify-center">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
-                      </div>
-
-                      {/* Info Column */}
-                      <div className="text-center flex justify-center">
-                        <div className="w-4 h-4 md:w-10 md:h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))
-                : fetchedStrategies.map((strategy, index) => (
-                    <Link key={index} to={`/strategy/${strategy.id}`}>
-                      <div
-                        className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
-                      >
-                        {/* {strategy.isStrategy && (
+                      ))
+                    : fetchedStrategies.map((strategy, index) => (
+                        <Link key={index} to={`/strategy/${strategy.id}`}>
+                          <div
+                            className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
+                          >
+                            {/* {strategy.isStrategy && (
                     <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none"></div>
                   )} */}
 
-                        <div className="flex space-x-3 col-span-3">
-                          <div className=" flex">
-                            <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                              <img
-                                src={strategy.token_icon}
-                                alt={strategy.name}
-                                className=""
-                              />
-                            </span>
-                            <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
-                              <img
-                                src={strategy.token_icon2}
-                                alt={strategy.name}
-                                className=" "
-                              />
-                            </span>
-                          </div>
-                          <div className="space-y-1">
-                            <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
-                              <span>{strategy.name}</span>
-                              {strategy.badges.map((badge, i) => (
-                                <div className="flex items-center space-x-2">
-                                  <span className="w-4 h-4 md:w-8 md:h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
-                                    <img
-                                      src={strategy.verified}
-                                      alt={strategy.name}
-                                      className=""
-                                    />
-                                  </span>
-
-                                  <Badge
-                                    key={i}
-                                    variant="secondary"
-                                    className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
-                                  >
-                                    {badge}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-
-                            <div className=" flex items-center space-x-1">
-                              <img
-                                src={strategy.protocol_icon}
-                                alt={strategy.name}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-[#808c7e] text-sm">
-                                {strategy.protocol}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-center space-y-1">
-                          {strategy.isStrategy ? (
-                            <div
-                              className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
-                            >
-                              {strategy.apy}
-                            </div>
-                          ) : (
-                            <div className={`font-medium ${strategy.apyColor}`}>
-                              {strategy.apy}
-                            </div>
-                          )}
-
-                          <div className="">
-                            {strategy.isStrategy ? (
-                              <div></div>
-                            ) : (
-                              <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
-                                <span>{strategy.points}</span>
-
-                                <span>
-                                  <img src={user_circle} alt={strategy.name} />
+                            <div className="flex space-x-3 col-span-3">
+                              <div className=" flex">
+                                <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#141C22] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                                  <img
+                                    src={strategy.token_icon}
+                                    alt={strategy.name}
+                                    className=""
+                                  />
+                                </span>
+                                <span className="w-5 h-5 md:w-8 md:h-8 rounded-2xl bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg -translate-x-2">
+                                  <img
+                                    src={strategy.token_icon2}
+                                    alt={strategy.name}
+                                    className=" "
+                                  />
                                 </span>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          {strategy.isStrategy ? (
-                            <div className="flex justify-center space-x-2">
-                              <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                                —
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="flex justify-center">
-                              <div className="flex space-x-1.5">
-                                {generateRiskBars(strategy.riskScore || 60)}
+                              <div className="space-y-1">
+                                <div className="font-medium text-[#1a2228] dark:text-[#FEFEFD] flex items-center space-x-2">
+                                  <span>{strategy.name}</span>
+                                  {strategy.badges.map((badge, i) => (
+                                    <div className="flex items-center space-x-2">
+                                      <span className="w-4 h-4 md:w-8 md:h-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg">
+                                        <img
+                                          src={strategy.verified}
+                                          alt={strategy.name}
+                                          className=""
+                                        />
+                                      </span>
+
+                                      <Badge
+                                        key={i}
+                                        variant="secondary"
+                                        className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white py-1 flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg text-[#10181D] text-xs"
+                                      >
+                                        {badge}
+                                      </Badge>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className=" flex items-center space-x-1">
+                                  <img
+                                    src={strategy.protocol_icon}
+                                    alt={strategy.name}
+                                    className="w-4 h-4"
+                                  />
+                                  <span className="text-[#808c7e] text-sm">
+                                    {strategy.protocol}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          )}
-                        </div>
+                            <div className="text-center space-y-1">
+                              {strategy.isStrategy ? (
+                                <div
+                                  className={`p-1.5 mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md font-bold dark:text-white transition-all duration-200 hover:scale-105 shadow-lg`}
+                                >
+                                  {strategy.apy}
+                                </div>
+                              ) : (
+                                <div
+                                  className={`font-medium ${strategy.apyColor}`}
+                                >
+                                  {strategy.apy}
+                                </div>
+                              )}
 
-                        <div className="">
-                          {strategy.isStrategy ? (
-                            <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                              {strategy.tvl}
+                              <div className="">
+                                {strategy.isStrategy ? (
+                                  <div></div>
+                                ) : (
+                                  <div className="text-[#7e868c] text-sm text-center flex items-center justify-center space-x-1">
+                                    <span>{strategy.points}</span>
+
+                                    <span>
+                                      <img
+                                        src={user_circle}
+                                        alt={strategy.name}
+                                      />
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          ) : (
-                            <div className="text-center font-medium text-[#565E64] ">
-                              {strategy.tvl}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="text-center ">
-                          <button className="p-1.5 hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
-                            <img src={help_circle} alt={strategy.name} />
-                          </button>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Mobile/Tablet Card View */}
-        <div className="lg:hidden space-y-3 sm:space-y-4 relative">
-          {fetchedStrategies.map((strategy, index) => (
-            <Link key={index} to={`/strategy/${strategy.id}`}>
-              <div className="relative">
-                {strategy.isStrategy && (
-                  <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none rounded-lg"></div>
-                )}
-                <Card className="bg-white dark:bg-[#141C22] mb-2 p-2 sm:p-3 border border-gray-200 dark:border-[#20282E] shadow-sm hover:shadow-md transition-all duration-200">
-                  <CardContent className="px-3 sm:px-4 py-2 sm:py-3">
-                    <div className="relative z-20">
-                      {/* Header - Title and Token */}
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        <div className="flex items-center space-x-2 sm:space-x-3">
-                          <img
-                            src={strategy.token_icon}
-                            alt={strategy.name}
-                            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
-                          />
-                          <div>
-                            <h3 className="font-semibold text-[#1a2228] dark:text-[#FEFEFD] text-xs sm:text-sm">
-                              {strategy.name}
-                            </h3>
-                            <p className="text-[#7e868c] text-xs flex items-center space-x-1">
-                              <span>{strategy.protocol}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Verification and Badges */}
-                        <div className="flex items-center space-x-1 sm:space-x-2">
-                          <img
-                            src={strategy.verified}
-                            alt="verified"
-                            className="w-3 h-3 sm:w-4 sm:h-4"
-                          />
-                          {strategy.badges.map((badge, i) => (
-                            <Badge
-                              key={i}
-                              variant="secondary"
-                              className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white shadow-sm text-[#10181D] text-xs px-1 sm:px-2 py-1"
-                            >
-                              {badge === "Hot & New" ? "Hot & New" : badge}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Metrics Row */}
-                      <div className="flex items-center justify-between mb-2 sm:mb-3">
-                        {/* APY */}
-                        <div className="text-center">
-                          <p className="text-[#7e868c] text-xs mb-1">APY</p>
-                          <p
-                            className={`font-semibold text-xs sm:text-sm ${strategy.apyColor}`}
-                          >
-                            {strategy.apy}
-                          </p>
-                        </div>
-
-                        {/* Risk */}
-                        <div className="text-center">
-                          <p className="text-[#7e868c] text-xs mb-1">RISK</p>
-                          <div className="flex space-x-1">
                             <div className="text-center">
                               {strategy.isStrategy ? (
                                 <div className="flex justify-center space-x-2">
@@ -837,106 +845,344 @@ export default function Dashboard() {
                                 </div>
                               )}
                             </div>
+
+                            <div className="">
+                              {strategy.isStrategy ? (
+                                <div className="p-1.5 font-bold mx-auto hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                                  {strategy.tvl}
+                                </div>
+                              ) : (
+                                <div className="text-center font-medium text-[#565E64] ">
+                                  {strategy.tvl}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="text-center ">
+                              <button className="p-1.5 hover:bg-[#e9e9e9] w-10 h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                                <img src={help_circle} alt={strategy.name} />
+                              </button>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Mobile/Tablet Card View */}
+            <div className="lg:hidden space-y-3 sm:space-y-4 relative">
+              {fetchedStrategies.map((strategy, index) => (
+                <Link key={index} to={`/strategy/${strategy.id}`}>
+                  <div className="relative">
+                    {strategy.isStrategy && (
+                      <div className="absolute inset-0 bg-white/60 dark:bg-[#141c2298] backdrop-blur-[0.5px] opacity-90 z-10 pointer-events-none rounded-lg"></div>
+                    )}
+                    <Card className="bg-white dark:bg-[#141C22] mb-2 p-2 sm:p-3 border border-gray-200 dark:border-[#20282E] shadow-sm hover:shadow-md transition-all duration-200">
+                      <CardContent className="px-3 sm:px-4 py-2 sm:py-3">
+                        <div className="relative z-20">
+                          {/* Header - Title and Token */}
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            <div className="flex items-center space-x-2 sm:space-x-3">
+                              <img
+                                src={strategy.token_icon}
+                                alt={strategy.name}
+                                className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
+                              />
+                              <div>
+                                <h3 className="font-semibold text-[#1a2228] dark:text-[#FEFEFD] text-xs sm:text-sm">
+                                  {strategy.name}
+                                </h3>
+                                <p className="text-[#7e868c] text-xs flex items-center space-x-1">
+                                  <span>{strategy.protocol}</span>
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Verification and Badges */}
+                            <div className="flex items-center space-x-1 sm:space-x-2">
+                              <img
+                                src={strategy.verified}
+                                alt="verified"
+                                className="w-3 h-3 sm:w-4 sm:h-4"
+                              />
+                              {strategy.badges.map((badge, i) => (
+                                <Badge
+                                  key={i}
+                                  variant="secondary"
+                                  className="bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#10181D] dark:to-[#121A21] backdrop-blur-md dark:text-white shadow-sm text-[#10181D] text-xs px-1 sm:px-2 py-1"
+                                >
+                                  {badge === "Hot & New" ? "Hot & New" : badge}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Metrics Row */}
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            {/* APY */}
+                            <div className="text-center">
+                              <p className="text-[#7e868c] text-xs mb-1">APY</p>
+                              <p
+                                className={`font-semibold text-xs sm:text-sm ${strategy.apyColor}`}
+                              >
+                                {strategy.apy}
+                              </p>
+                            </div>
+
+                            {/* Risk */}
+                            <div className="text-center">
+                              <p className="text-[#7e868c] text-xs mb-1">
+                                RISK
+                              </p>
+                              <div className="flex space-x-1">
+                                <div className="text-center">
+                                  {strategy.isStrategy ? (
+                                    <div className="flex justify-center space-x-2">
+                                      <button className="p-1.5 font-bold hover:bg-[#e9e9e9] w-4 h-4 md:w-10 md:h-10 text-center rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:bg-gradient-to-br dark:from-[#20282E] dark:to-[#121a21] backdrop-blur-md dark:text-white transition-all duration-200 hover:scale-105 shadow-lg">
+                                        —
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-center">
+                                      <div className="flex space-x-1.5">
+                                        {generateRiskBars(
+                                          strategy.riskScore || 60
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* TVL */}
+                            <div className="text-center">
+                              <p className="text-[#7e868c] text-xs mb-1">TVL</p>
+                              <p className="font-semibold text-[#565E64] text-xs sm:text-sm">
+                                {strategy.tvl}
+                              </p>
+                            </div>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </Link>
+              ))}
+            </div>
 
-                        {/* TVL */}
-                        <div className="text-center">
-                          <p className="text-[#7e868c] text-xs mb-1">TVL</p>
-                          <p className="font-semibold text-[#565E64] text-xs sm:text-sm">
-                            {strategy.tvl}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            {/* Pagination */}
+            <div className="flex items-center justify-center space-x-1 sm:space-x-2 mt-4 sm:mt-6">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-[#7E868C] dark:text-[#565E64] text-xs sm:text-sm"
+                disabled
+              >
+                <svg
+                  className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Prev</span>
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
+              >
+                1
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
+              >
+                2
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
+              >
+                3
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
+              >
+                4
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
+              >
+                5
+              </Button>
+
+              <span className="text-[#7e868c] text-xs sm:text-sm">...</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <svg
+                  className="w-3 h-3 sm:w-4 sm:h-4 ml-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* Agents Content */}
+        {activeTab === "agents" && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-[#1A2228] dark:text-[#F5FBFF]">
+                My Agents
+              </h2>
+              <div className="text-sm text-[#565E64] dark:text-[#95A0A6]">
+                {agents.length} agent{agents.length !== 1 ? "s" : ""} found
               </div>
-            </Link>
-          ))}
-        </div>
+            </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center space-x-1 sm:space-x-2 mt-4 sm:mt-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-[#7E868C] dark:text-[#565E64] text-xs sm:text-sm"
-            disabled
-          >
-            <svg
-              className="w-3 h-3 sm:w-4 sm:h-4 mr-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-            <span className="hidden sm:inline">Prev</span>
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
-          >
-            1
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
-          >
-            2
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
-          >
-            3
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
-          >
-            4
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm px-2 sm:px-3"
-          >
-            5
-          </Button>
+            {loadingAgents && (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A2228] dark:border-[#F5FBFF]"></div>
+              </div>
+            )}
 
-          <span className="text-[#7e868c] text-xs sm:text-sm">...</span>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-[#EFEFEFE5] dark:bg-[#161E24] text-[#565E64] dark:text-[#95A0A6] text-xs sm:text-sm"
-          >
-            <span className="hidden sm:inline">Next</span>
-            <svg
-              className="w-3 h-3 sm:w-4 sm:h-4 ml-1"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Button>
-        </div>
+            {agentsError && (
+              <div className="text-center py-8">
+                <p className="text-red-500">{agentsError}</p>
+              </div>
+            )}
+
+            {!loadingAgents && !agentsError && agents.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-[#565E64] dark:text-[#95A0A6] mb-4">
+                  <svg
+                    className="w-16 h-16 mx-auto mb-4 opacity-50"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium mb-2">No agents found</p>
+                  <p className="text-sm">
+                    Deploy your first agent using the recommendation system
+                  </p>
+                </div>
+                <RecommendButton className="animate-none" />
+              </div>
+            )}
+
+            {!loadingAgents && !agentsError && agents.length > 0 && (
+              <div className="grid gap-4">
+                {agents.map((agent) => (
+                  <Link
+                    key={agent.process_id}
+                    to={`/agent/${agent.process_id}`}
+                    className="block"
+                  >
+                    <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] hover:scale-105 transition-all duration-200 shadow-lg cursor-pointer">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] flex items-center justify-center">
+                              <svg
+                                className="w-6 h-6 text-white dark:text-[#1A2228]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-[#1A2228] dark:text-[#F5FBFF]">
+                                Agent #{agent.process_id.slice(-8)}
+                              </h3>
+                              <p className="text-sm text-[#565E64] dark:text-[#95A0A6]">
+                                {agent.config.StrategyType} • {agent.config.Dex}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge
+                              className={`rounded-lg font-medium ${
+                                agent.status === "active"
+                                  ? "bg-gradient-to-br from-green-50 to-green-100 text-green-800 dark:from-green-900/20 dark:to-green-800/20 dark:text-green-300"
+                                  : agent.status === "ready"
+                                  ? "bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800 dark:from-blue-900/20 dark:to-blue-800/20 dark:text-blue-300"
+                                  : "bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-800 dark:from-yellow-900/20 dark:to-yellow-800/20 dark:text-yellow-300"
+                              }`}
+                            >
+                              {agent.status}
+                            </Badge>
+                            <div className="text-xs text-[#565E64] dark:text-[#95A0A6] mt-1">
+                              Created:{" "}
+                              {new Date(agent.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex items-center space-x-4 text-sm text-[#565E64] dark:text-[#95A0A6]">
+                          <span>
+                            Conversion: {agent.config.ConversionPercentage}%
+                          </span>
+                          <span>Slippage: {agent.config.Slippage}%</span>
+                          {agent.config.RunIndefinitely ? (
+                            <span>Run: Indefinitely</span>
+                          ) : (
+                            <span>
+                              End:{" "}
+                              {new Date(
+                                agent.config.EndDate * 1000
+                              ).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <DashboardFooter />

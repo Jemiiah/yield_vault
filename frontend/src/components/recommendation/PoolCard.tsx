@@ -84,12 +84,16 @@ export default function PoolCard({
   }, [pool.token0, pool.token1, fetchTokenLogo]);
   const determineBaseToken = (pool: Pool): string => {
     // Always use token1 as base token as suggested
-    return pool.token1 || AO_TOKEN;
+    const baseToken = pool.token1 || AO_TOKEN;
+    console.log("Determining base token:", { poolId: pool.id, token1: pool.token1, baseToken });
+    return baseToken;
   };
 
   const determineTokenOut = (pool: Pool): string => {
     // Always use token0 as out token as suggested
-    return pool.token0 || AO_TOKEN;
+    const tokenOut = pool.token0 || AO_TOKEN;
+    console.log("Determining token out:", { poolId: pool.id, token0: pool.token0, tokenOut });
+    return tokenOut;
   };
 
   const handleAgentDeploy = async () => {
@@ -128,6 +132,12 @@ export default function PoolCard({
       console.log("Deploying agent with pool-specific config:", {
         poolName: pool.name,
         poolId: poolId,
+        poolData: {
+          token0: pool.token0,
+          token1: pool.token1,
+          token_pair: pool.name,
+          tokens: pool.tokens
+        },
         baseToken: baseToken, // Always token1
         tokenOut: tokenOut, // Always token0
         baseTokenTicker: pool.token1_ticker,
