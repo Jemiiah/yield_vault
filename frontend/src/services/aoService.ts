@@ -2,6 +2,9 @@ import { message, result, dryrun, createDataItemSigner } from "@permaweb/aoconne
 import { MANAGER_CONTRACT } from "../constants/yao_process";
 import type { RiskAssessmentData, Pool } from "../components/recommendation/types";
 
+// Backend API configuration
+const API_BASE = "http://localhost:3000";
+
 export interface AIRecommendation {
   pool_id: string;
   dex: string;
@@ -73,13 +76,13 @@ export async function getAIRecommendations(
     // Check if we got messages in the dryrun response
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
-      
+
       if (lastMessage.Tags) {
         const actionTag = lastMessage.Tags.find((tag: any) => tag.name === "Action");
         const errorTag = lastMessage.Tags.find((tag: any) => tag.name === "Error");
-        
+
         if (actionTag?.value === "AI-Recommendations-Response") {
-          return parseAIResponse(response);
+          return await parseAIResponse(response);
         } else if (actionTag?.value === "AI-Recommendations-Error") {
           throw new Error(errorTag?.value || "AI recommendations failed");
         }
@@ -96,7 +99,7 @@ export async function getAIRecommendations(
 /**
  * Parse AI recommendations response and convert to Pool format
  */
-function parseAIResponse(response: any): Pool[] {
+async function parseAIResponse(response: any): Promise<Pool[]> {
   try {
     if (!response.Messages || response.Messages.length === 0) {
       throw new Error("No messages in response");
@@ -110,26 +113,80 @@ function parseAIResponse(response: any): Pool[] {
     }
 
     const data = JSON.parse(lastMessage.Data) as AIRecommendationsResponse;
-    
+
     if (!data.recommendations || !Array.isArray(data.recommendations)) {
       throw new Error("Invalid recommendations format");
     }
 
-    // Convert AI recommendations to Pool format
-    return data.recommendations.map((rec): Pool => ({
-      id: rec.pool_id,
-      name: rec.token_pair,
-      apy: rec.apy,
-      risk: rec.risk_level,
-      tokens: rec.token_pair.includes("/") ? rec.token_pair.split("/") : [rec.token_pair],
-      description: rec.reasoning,
-      tvl: "N/A", // TVL not provided in AI response
-      verified: true, // Assume AI recommendations are for verified pools
-      // Additional pool data that might be available from Manager Contract
-      amm_process: rec.pool_id, // Use pool_id as amm_process
-      // Note: token0, token1, etc. would need to be provided by Manager Contract
-      // For now, we'll rely on the pool ID to get this information
-    }));
+    // Fetch complete pool data from backend to get token processes
+    let backendPools: any[] = [];
+    try {
+      const backendResponse = await fetch(`${API_BASE}/pools`);
+      if (backendResponse.ok) {
+        backendPools = await backendResponse.json();
+        console.log("Fetched backend pools for token data:", backendPools.length);
+      }
+    } catch (error) {
+      console.warn("Failed to fetch backend pools, using AI data only:", error);
+    }
+
+    // Convert AI recommendations to Pool format with backend token data
+    return data.recommendations.map((rec): Pool => {
+      // Find matching pool in backend data by amm_process
+      const backendPool = backendPools.find(pool => pool.amm_process === rec.pool_id);
+
+      if (backendPool) {
+        console.log("Found matching backend pool for", rec.pool_id, ":", {
+          token0: backendPool.token0,
+          token1: backendPool.token1,
+          token0_ticker: backendPool.token0_ticker,
+          token1_ticker: backendPool.token1_ticker
+        });
+
+        return {
+          id: rec.pool_id,
+          name: rec.token_pair,
+          apy: rec.apy,
+          risk: rec.risk_level,
+          tokens: [backendPool.token0_ticker, backendPool.token1_ticker],
+          description: rec.reasoning,
+          tvl: backendPool.liquidity_usd ? `$${backendPool.liquidity_usd.toLocaleString()}` : "N/A",
+          verified: true,
+          amm_process: rec.pool_id,
+          // Use backend pool data for accurate token processes
+          token0: backendPool.token0,
+          token1: backendPool.token1,
+          token0_ticker: backendPool.token0_ticker,
+          token1_ticker: backendPool.token1_ticker,
+          token0_name: backendPool.token0_name,
+          token1_name: backendPool.token1_name,
+        };
+      } else {
+        // Fallback to parsing token pair if no backend data found
+        console.warn("No backend pool data found for", rec.pool_id, "using token pair parsing");
+        const tokens = rec.token_pair.includes("/") ? rec.token_pair.split("/") : [rec.token_pair];
+        const token0 = tokens[0]?.trim();
+        const token1 = tokens[1]?.trim();
+
+        return {
+          id: rec.pool_id,
+          name: rec.token_pair,
+          apy: rec.apy,
+          risk: rec.risk_level,
+          tokens: tokens,
+          description: rec.reasoning,
+          tvl: "N/A",
+          verified: true,
+          amm_process: rec.pool_id,
+          token0: token0,
+          token1: token1,
+          token0_ticker: token0,
+          token1_ticker: token1,
+          token0_name: token0,
+          token1_name: token1,
+        };
+      }
+    });
   } catch (error) {
     console.error("Error parsing AI response:", error);
     throw new Error("Failed to parse AI recommendations response");
