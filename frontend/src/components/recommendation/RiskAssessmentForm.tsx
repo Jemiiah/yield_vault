@@ -92,10 +92,7 @@ export default function RiskAssessmentForm({
         "Which tokens are you most interested in? (Select all that apply)",
       options: [
         { value: "AO", label: "AO" },
-        { value: "ETH", label: "ETH" },
-        { value: "BTC", label: "BTC" },
-        { value: "USDC", label: "USDC" },
-        { value: "DAI", label: "DAI" },
+        { value: "wUSDC", label: "wUSDC" },
         { value: "wAR", label: "wAR" },
       ],
       multiSelect: true,
@@ -131,18 +128,18 @@ export default function RiskAssessmentForm({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-2">
+        <h2 className="text-2xl font-bold text-[#1A2228] dark:text-[#F5FBFF] mb-2">
           Get Personalized Recommendations
         </h2>
-        <p className="text-[#7e868c] dark:text-[#95A0A6]">
+        <p className="text-[#565E64] dark:text-[#95A0A6]">
           Answer a few questions to get the best yield strategies for you
         </p>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-[#EAEAEA] dark:bg-[#1B2329] rounded-full h-2">
+      <div className="w-full bg-[#EAEAEA] dark:bg-[#192127] rounded-full h-2">
         <div
-          className="bg-gradient-to-r from-[#25A8CF] to-[#30CFFF] h-2 rounded-full transition-all duration-300"
+          className="bg-gradient-to-r from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] h-2 rounded-full transition-all duration-300"
           style={{
             width: `${((currentQuestion + 1) / questions.length) * 100}%`,
           }}
@@ -150,9 +147,9 @@ export default function RiskAssessmentForm({
       </div>
 
       {/* Question */}
-      <Card className="bg-[#EDF6F9] border border-[#D6EEF6] dark:bg-[#161E24] dark:border-[#192127]">
+      <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] shadow-lg">
         <CardContent className="p-6">
-          <h3 className="text-xl font-semibold text-[#1A2228] dark:text-[#EAEAEA] mb-6">
+          <h3 className="text-xl font-semibold text-[#1A2228] dark:text-[#F5FBFF] mb-6">
             {currentQ.question}
           </h3>
 
@@ -179,27 +176,27 @@ export default function RiskAssessmentForm({
                       handleAnswer(currentQ.id, option.value);
                     }
                   }}
-                  className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
+                  className={`w-full p-4 rounded-lg border-2 transition-all duration-200 hover:scale-105 text-left shadow-lg ${
                     isSelected
-                      ? "border-[#25A8CF] bg-[#D6EEF6] dark:bg-[#052834]"
-                      : "border-[#DAD9D9E5] dark:border-[#222A30] hover:border-[#25A8CF] dark:hover:border-[#25A8CF]"
+                      ? "border-[#1A2228] dark:border-[#F5FBFF] bg-gradient-to-br from-[#F6F5F2] to-[#EAEAEA] dark:from-[#11191F] dark:to-[#0F1419]"
+                      : "border-[#EAEAEA] dark:border-[#192127] bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] hover:border-[#1A2228] dark:hover:border-[#F5FBFF]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-medium text-[#1A2228] dark:text-[#EAEAEA]">
+                      <div className="font-medium text-[#1A2228] dark:text-[#F5FBFF]">
                         {option.label}
                       </div>
                       {"description" in option && option.description && (
-                        <div className="text-sm text-[#7e868c] dark:text-[#95A0A6] mt-1">
+                        <div className="text-sm text-[#565E64] dark:text-[#95A0A6] mt-1">
                           {option.description}
                         </div>
                       )}
                     </div>
                     {isSelected && (
-                      <div className="w-5 h-5 bg-[#25A8CF] rounded-full flex items-center justify-center">
+                      <div className="w-5 h-5 bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] rounded-full flex items-center justify-center">
                         <svg
-                          className="w-3 h-3 text-white"
+                          className="w-3 h-3 text-white dark:text-[#1A2228]"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -225,7 +222,7 @@ export default function RiskAssessmentForm({
           onClick={handleBack}
           disabled={currentQuestion === 0}
           variant="outline"
-          className="border-[#DAD9D9E5] dark:border-[#222A30] text-[#7e868c] hover:bg-[#EAEAEA] dark:hover:bg-[#1B2329]"
+          className="h-10 px-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] dark:text-[#95A0A6] hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
         >
           Back
         </Button>
@@ -236,7 +233,7 @@ export default function RiskAssessmentForm({
             !currentAnswer ||
             (Array.isArray(currentAnswer) && currentAnswer.length === 0)
           }
-          className="bg-gradient-to-r from-[#25A8CF] to-[#30CFFF] hover:from-[#1f8ba8] hover:to-[#28b8e6] text-white"
+          className="h-10 px-6 rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] text-white font-semibold hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
         >
           {currentQuestion === questions.length - 1
             ? "Get Recommendations"

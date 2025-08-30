@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import type { Pool, RiskAssessmentData } from "./types";
 import PoolCard from "./PoolCard";
 import { getRandomSelection, deployStrategy } from "./integrations";
-import { Link } from "react-router-dom";
 
 interface PoolRecommendationsProps {
   pools: Pool[];
@@ -62,25 +61,25 @@ export default function PoolRecommendations({
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-[#1A2228] dark:text-[#EAEAEA] mb-2">
+        <h2 className="text-2xl font-bold text-[#1A2228] dark:text-[#F5FBFF] mb-2">
           Recommended for You
         </h2>
-        <p className="text-[#7e868c] dark:text-[#95A0A6]">
+        <p className="text-[#565E64] dark:text-[#95A0A6]">
           Based on your preferences, here are the best strategies
         </p>
       </div>
 
       {/* Risk Summary */}
-      <Card className="bg-[#EDF6F9] border border-[#D6EEF6] dark:bg-[#161E24] dark:border-[#192127]">
+      <Card className="rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] shadow-lg">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-2">
-            <Badge className="bg-[#25A8CF] text-white">
+            <Badge className="rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] text-white dark:text-[#1A2228] font-medium">
               Risk: {riskData.riskTolerance}
             </Badge>
-            <Badge className="bg-[#30CFFF] text-white">
+            <Badge className="rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] text-white dark:text-[#1A2228] font-medium">
               Amount: {riskData.investmentAmount}
             </Badge>
-            <Badge className="bg-[#25A8CF] text-white">
+            <Badge className="rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] text-white dark:text-[#1A2228] font-medium">
               Horizon: {riskData.timeHorizon}
             </Badge>
           </div>
@@ -92,11 +91,11 @@ export default function PoolRecommendations({
         <Button
           onClick={handleRandomSelection}
           disabled={isRandomizing}
-          className="bg-gradient-to-r from-[#FD3235] to-[#FF6B6B] hover:from-[#e62e31] hover:to-[#e55a5a] text-white font-medium px-8 py-3 rounded-lg shadow-lg transition-all duration-200"
+          className="h-12 w-full md:w-72 text-base rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:bg-gradient-to-br dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] dark:text-[#1A2228] backdrop-blur-md text-white font-semibold transition-all duration-200 hover:scale-105 shadow-lg disabled:opacity-50 disabled:hover:scale-100"
         >
           {isRandomizing ? (
             <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#1A2228]"></div>
               <span>Selecting Best Option...</span>
             </div>
           ) : (
@@ -122,35 +121,29 @@ export default function PoolRecommendations({
 
       {/* Selected Pool (if random selection was used) */}
       {selectedPool && (
-        <Card className="bg-gradient-to-r from-[#D6EEF6] to-[#E8F4F8] border-2 border-[#25A8CF] dark:from-[#052834] dark:to-[#0a3a4a] dark:border-[#30CFFF]">
+        <Card className="rounded-lg bg-gradient-to-br from-[#F6F5F2] to-[#EAEAEA] dark:from-[#11191F] dark:to-[#0F1419] border-2 border-[#1A2228] dark:border-[#F5FBFF] shadow-lg">
           <CardContent className="p-6">
             <div className="text-center mb-4">
-              <Badge className="bg-[#25A8CF] text-white mb-2">
+              <Badge className="rounded-lg bg-gradient-to-br from-[#4C545A] to-[#060E14] dark:from-[#DAD9D9E5] dark:to-[#F8F7F4] text-white dark:text-[#1A2228] font-medium mb-2">
                 🎯 AI Recommended
               </Badge>
-              <h3 className="text-xl font-bold text-[#1A2228] dark:text-[#EAEAEA]">
+              <h3 className="text-xl font-bold text-[#1A2228] dark:text-[#F5FBFF]">
                 Best Match for You
               </h3>
             </div>
-            <PoolCard pool={selectedPool} />
-            <Link
-              to={`/strategy/${selectedPool.id}`}
-              className="mt-4 text-center"
-            >
-              <Button
-                onClick={() => handleDeploy(selectedPool)}
-                className="bg-gradient-to-r from-[#25A8CF] to-[#30CFFF] hover:from-[#1f8ba8] hover:to-[#28b8e6] text-white font-medium px-8 py-3 rounded-lg"
-              >
-                Deploy Strategy
-              </Button>
-            </Link>
+            <PoolCard 
+              pool={selectedPool} 
+              riskData={riskData}
+              enableAgentDeployment={true}
+              showDeployButton={false}
+            />
           </CardContent>
         </Card>
       )}
 
       {/* All Recommended Pools */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-[#1A2228] dark:text-[#EAEAEA]">
+        <h3 className="text-lg font-semibold text-[#1A2228] dark:text-[#F5FBFF]">
           All Recommendations
         </h3>
         <div className="grid gap-4">
@@ -159,6 +152,9 @@ export default function PoolRecommendations({
               key={pool.id}
               pool={pool}
               onDeploy={() => handleDeploy(pool)}
+              riskData={riskData}
+              enableAgentDeployment={true}
+              showDeployButton={false}
             />
           ))}
         </div>
@@ -169,7 +165,7 @@ export default function PoolRecommendations({
         <Button
           onClick={onBack}
           variant="outline"
-          className="border-[#DAD9D9E5] dark:border-[#222A30] text-[#7e868c] hover:bg-[#EAEAEA] dark:hover:bg-[#1B2329]"
+          className="h-10 px-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] dark:text-[#95A0A6] hover:scale-105 transition-all duration-200 shadow-lg"
         >
           Back to Questions
         </Button>
@@ -177,7 +173,7 @@ export default function PoolRecommendations({
         <Button
           onClick={onClose}
           variant="outline"
-          className="border-[#DAD9D9E5] dark:border-[#222A30] text-[#7e868c] hover:bg-[#EAEAEA] dark:hover:bg-[#1B2329]"
+          className="h-10 px-6 rounded-lg bg-gradient-to-br from-white to-[#EAEAEA] dark:from-[#10181D] dark:to-[#121A21] border border-[#EAEAEA] dark:border-[#192127] text-[#565E64] dark:text-[#95A0A6] hover:scale-105 transition-all duration-200 shadow-lg"
         >
           Close
         </Button>
