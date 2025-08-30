@@ -1,4 +1,4 @@
-import { message, result, dryrun } from "@permaweb/aoconnect";
+import { message, result, dryrun, createDataItemSigner } from "@permaweb/aoconnect";
 import { MANAGER_CONTRACT } from "../constants/yao_process";
 import type { RiskAssessmentData, Pool } from "../components/recommendation/types";
 
@@ -47,8 +47,8 @@ export async function getAIRecommendations(
   try {
     console.log("Requesting AI recommendations from Manager Contract:", riskData);
 
-    // Send message to Manager Contract
-    const messageId = await message({
+    // Send dryrun to Manager Contract
+    const response = await dryrun({
       process: MANAGER_CONTRACT,
       tags: [
         { name: "Action", value: "Get-AI-Recommendations" }
@@ -56,36 +56,21 @@ export async function getAIRecommendations(
       data: JSON.stringify(riskData)
     });
 
-    console.log("AI recommendations request sent, message ID:", messageId);
-
-    // Get the result
-    const response = await result({
-      message: messageId,
-      process: MANAGER_CONTRACT
-    });
-
     console.log("AI recommendations response:", response);
 
-    // Check if we got a pending response first
+    // Check if we got messages in the dryrun response
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
       
-      if (lastMessage.Tags?.Action === "AI-Recommendations-Pending") {
-        // Wait for the actual response (this is a simplified approach)
-        // In a real implementation, you might want to poll or use websockets
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      if (lastMessage.Tags) {
+        const actionTag = lastMessage.Tags.find((tag: any) => tag.name === "Action");
+        const errorTag = lastMessage.Tags.find((tag: any) => tag.name === "Error");
         
-        // Try to get the response again
-        const finalResponse = await result({
-          message: messageId,
-          process: MANAGER_CONTRACT
-        });
-        
-        return parseAIResponse(finalResponse);
-      } else if (lastMessage.Tags?.Action === "AI-Recommendations-Response") {
-        return parseAIResponse(response);
-      } else if (lastMessage.Tags?.Action === "AI-Recommendations-Error") {
-        throw new Error(lastMessage.Tags?.Error || "AI recommendations failed");
+        if (actionTag?.value === "AI-Recommendations-Response") {
+          return parseAIResponse(response);
+        } else if (actionTag?.value === "AI-Recommendations-Error") {
+          throw new Error(errorTag?.value || "AI recommendations failed");
+        }
       }
     }
 
@@ -107,7 +92,9 @@ function parseAIResponse(response: any): Pool[] {
 
     const lastMessage = response.Messages[response.Messages.length - 1];
     
-    if (lastMessage.Tags?.Action !== "AI-Recommendations-Response") {
+    // Check if we have the correct action tag
+    const actionTag = lastMessage.Tags?.find((tag: any) => tag.name === "Action");
+    if (actionTag?.value !== "AI-Recommendations-Response") {
       throw new Error("Invalid response action");
     }
 
@@ -123,7 +110,7 @@ function parseAIResponse(response: any): Pool[] {
       name: rec.token_pair,
       apy: rec.apy,
       risk: rec.risk_level,
-      tokens: rec.token_pair.split("/"),
+      tokens: rec.token_pair.includes("/") ? rec.token_pair.split("/") : [rec.token_pair],
       description: rec.reasoning,
       tvl: "N/A", // TVL not provided in AI response
       verified: true, // Assume AI recommendations are for verified pools
@@ -160,7 +147,8 @@ export async function spawnAgent(config: AgentSpawnConfig): Promise<string> {
         { name: "Base-Token", value: config.baseToken },
         ...(config.poolId ? [{ name: "Pool-Id", value: config.poolId }] : []),
         ...(config.poolIdReference ? [{ name: "Pool-Id-Reference", value: config.poolIdReference }] : [])
-      ]
+      ],
+      signer: createDataItemSigner(window.arweaveWallet),
     });
 
     console.log("Agent spawn request sent, message ID:", messageId);
@@ -173,20 +161,34 @@ export async function spawnAgent(config: AgentSpawnConfig): Promise<string> {
 
     console.log("Agent spawn response:", response);
 
+    // Check for successful spawn in Messages
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
       
-      if (lastMessage.Tags?.Action === "Spawn-Agent-Pending") {
-        const sessionId = lastMessage.Tags?.["Session-Id"];
+      // Find the action tag
+      const actionTag = lastMessage.Tags?.find((tag: any) => tag.name === "Action");
+      const sessionIdTag = lastMessage.Tags?.find((tag: any) => tag.name === "Session-Id");
+      const errorTag = lastMessage.Tags?.find((tag: any) => tag.name === "Error");
+      
+      if (actionTag?.value === "Spawn-Agent-Pending") {
+        const sessionId = sessionIdTag?.value;
         
-        // Wait for agent to be spawned (simplified approach)
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        // Check if there's a spawn in the Spawns array (indicates successful spawn)
+        if (response.Spawns && response.Spawns.length > 0) {
+          console.log("Agent spawn initiated successfully");
+          console.log("Spawn details:", response.Spawns[0]);
+          
+          // The spawned process ID is not immediately available in the response
+          // It will be provided later via the Spawned message that the Manager Contract handles
+          // For now, return the session ID which can be used to track the agent
+          console.log("Returning session ID for tracking:", sessionId);
+          return sessionId || "spawning";
+        }
         
-        // In a real implementation, you would poll for the spawned agent
-        // For now, return the session ID as a placeholder
+        // If no spawn yet, return session ID for tracking
         return sessionId || "pending";
-      } else if (lastMessage.Tags?.Action === "Spawn-Agent-Error") {
-        throw new Error(lastMessage.Tags?.Error || "Agent spawn failed");
+      } else if (actionTag?.value === "Spawn-Agent-Error") {
+        throw new Error(errorTag?.value || "Agent spawn failed");
       }
     }
 
@@ -220,11 +222,15 @@ export async function getUserAgents(userAddress?: string): Promise<AgentRecord[]
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
       
-      if (lastMessage.Tags?.Action === "User-Agents-Response") {
+      // Find the action tag
+      const actionTag = lastMessage.Tags?.find((tag: any) => tag.name === "Action");
+      const errorTag = lastMessage.Tags?.find((tag: any) => tag.name === "Error");
+      
+      if (actionTag?.value === "User-Agents-Response") {
         const data = JSON.parse(lastMessage.Data) as AgentRecord[];
         return data;
-      } else if (lastMessage.Tags?.Action === "User-Agents-Error") {
-        throw new Error(lastMessage.Tags?.Error || "Failed to get user agents");
+      } else if (actionTag?.value === "User-Agents-Error") {
+        throw new Error(errorTag?.value || "Failed to get user agents");
       }
     }
 
@@ -234,6 +240,7 @@ export async function getUserAgents(userAddress?: string): Promise<AgentRecord[]
     throw new Error("Failed to get user agents from Manager Contract");
   }
 }
+
 
 /**
  * Get available pools from Manager Contract
@@ -252,7 +259,10 @@ export async function getAvailablePools(): Promise<Pool[]> {
     if (response.Messages && response.Messages.length > 0) {
       const lastMessage = response.Messages[response.Messages.length - 1];
       
-      if (lastMessage.Tags?.Action === "Available-Pools-Response") {
+      // Check for the correct action tag
+      const actionTag = lastMessage.Tags?.find((tag: any) => tag.name === "Action");
+      
+      if (actionTag?.value === "Available-Pools-Response") {
         const poolsData = JSON.parse(lastMessage.Data);
         
         // Convert Manager Contract pool format to frontend Pool format

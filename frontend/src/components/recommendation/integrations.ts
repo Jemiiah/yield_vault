@@ -1,107 +1,21 @@
 import type { RiskAssessmentData, Pool } from "./types";
-
-// TODO: Replace with actual APUS SDK import
-// import { APUSClient } from '@apus/sdk';
-
-// TODO: Replace with actual Randao import
-// import { RandaoProvider } from '@randao/randomness';
+import { getAIRecommendations as getAIRecommendationsFromContract } from "../../services/aoService";
 
 /**
- * APUS SDK AI Integration
- * This function should be called to get AI-powered pool recommendations
+ * Get AI-powered pool recommendations via Manager Contract
+ * This function calls the Manager Contract directly using AO Connect
  */
 export async function getAIRecommendations(
   riskData: RiskAssessmentData
 ): Promise<Pool[]> {
-  try {
-    // TODO: Replace with actual APUS SDK implementation
-    // const apusClient = new APUSClient({
-    //   apiKey: process.env.REACT_APP_APUS_API_KEY,
-    // });
+  console.log("Getting AI recommendations via Manager Contract:", riskData);
 
-    // const response = await apusClient.recommendPools({
-    //   riskTolerance: riskData.riskTolerance,
-    //   investmentAmount: riskData.investmentAmount,
-    //   timeHorizon: riskData.timeHorizon,
-    //   experienceLevel: riskData.experienceLevel,
-    //   preferredTokens: riskData.preferredTokens,
-    // });
-
-    // return response.pools;
-
-    // Mock implementation for now
-    console.log("Getting AI recommendations for:", riskData);
-
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Return mock data based on risk preferences
-    const mockPools: Pool[] = [
-      {
-        id: "26BXDOZNPRhRwc7QFymTF5IJX-mBO2E8T8PN1Yj4olg",
-        name: "AO/wAR",
-        apy: "31.22%",
-        risk: "Low",
-        tokens: ["AO", "wAR"],
-        description:
-          "Automated market making strategy with high yield potential",
-        tvl: "$2.5M",
-        verified: true,
-      },
-      {
-        id: "96BXDOZNPRhRwc7QFymaa212X-mBO2E8T8PN1Yj4olg",
-        name: "ETH/USDC",
-        apy: "28.45%",
-        risk: "Medium",
-        tokens: ["ETH", "USDC"],
-        description: "Stable liquidity provision with moderate risk",
-        tvl: "$1.8M",
-        verified: true,
-      },
-      {
-        id: "16BXDOZNPRhRwc7QFymTF5IJX-mBO2E8T8PN1Y",
-        name: "BTC/AO",
-        apy: "35.67%",
-        risk: "High",
-        tokens: ["BTC", "AO"],
-        description: "High yield strategy with increased volatility",
-        tvl: "$950K",
-        verified: false,
-      },
-      {
-        id: "26BXDOZNPRhRwc7QFymTF5IJX-mBO2E8T8PN1Y",
-        name: "USDC/DAI",
-        apy: "15.23%",
-        risk: "Very Low",
-        tokens: ["USDC", "DAI"],
-        description: "Stablecoin pair with minimal risk",
-        tvl: "$3.2M",
-        verified: true,
-      },
-    ];
-
-    // Filter based on risk tolerance
-    const filteredPools = mockPools.filter((pool) => {
-      const riskLevels = {
-        "Very Low": 0,
-        Low: 1,
-        Medium: 2,
-        High: 3,
-      };
-
-      const userRiskLevel =
-        riskLevels[riskData.riskTolerance as keyof typeof riskLevels] || 1;
-      const poolRiskLevel =
-        riskLevels[pool.risk as keyof typeof riskLevels] || 1;
-
-      return poolRiskLevel <= userRiskLevel + 1; // Allow one level higher
-    });
-
-    return filteredPools.slice(0, 4); // Return top 4 matches
-  } catch (error) {
-    console.error("Error getting AI recommendations:", error);
-    throw new Error("Failed to get recommendations");
-  }
+  // Call Manager Contract directly - let errors propagate
+  const recommendations = await getAIRecommendationsFromContract(riskData);
+  
+  console.log("Received recommendations from Manager Contract:", recommendations);
+  
+  return recommendations;
 }
 
 /**

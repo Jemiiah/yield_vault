@@ -92,10 +92,7 @@ export default function RiskAssessmentForm({
         "Which tokens are you most interested in? (Select all that apply)",
       options: [
         { value: "AO", label: "AO" },
-        { value: "ETH", label: "ETH" },
-        { value: "BTC", label: "BTC" },
-        { value: "USDC", label: "USDC" },
-        { value: "DAI", label: "DAI" },
+        { value: "wUSDC", label: "wUSDC" },
         { value: "wAR", label: "wAR" },
       ],
       multiSelect: true,

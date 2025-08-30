@@ -307,7 +307,7 @@ export default function Dashboard() {
         .map((p) => {
           const apyPct = deriveApyPct(p);
           const risk = calculateRisk(p);
-          console.log("p strategy xxxxxxxxxxxxxxxx", p);
+          // console.log("p strategy xxxxxxxxxxxxxxxx", p);
           return {
             id:
               p.amm_process ||

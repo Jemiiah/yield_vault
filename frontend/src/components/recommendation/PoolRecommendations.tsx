@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import type { Pool, RiskAssessmentData } from "./types";
 import PoolCard from "./PoolCard";
 import { getRandomSelection, deployStrategy } from "./integrations";
-import { Link } from "react-router-dom";
 
 interface PoolRecommendationsProps {
   pools: Pool[];
@@ -132,18 +131,12 @@ export default function PoolRecommendations({
                 Best Match for You
               </h3>
             </div>
-            <PoolCard pool={selectedPool} />
-            <Link
-              to={`/strategy/${selectedPool.id}`}
-              className="mt-4 text-center"
-            >
-              <Button
-                onClick={() => handleDeploy(selectedPool)}
-                className="bg-gradient-to-r from-[#25A8CF] to-[#30CFFF] hover:from-[#1f8ba8] hover:to-[#28b8e6] text-white font-medium px-8 py-3 rounded-lg"
-              >
-                Deploy Strategy
-              </Button>
-            </Link>
+            <PoolCard 
+              pool={selectedPool} 
+              riskData={riskData}
+              enableAgentDeployment={true}
+              showDeployButton={false}
+            />
           </CardContent>
         </Card>
       )}
@@ -159,6 +152,9 @@ export default function PoolRecommendations({
               key={pool.id}
               pool={pool}
               onDeploy={() => handleDeploy(pool)}
+              riskData={riskData}
+              enableAgentDeployment={true}
+              showDeployButton={false}
             />
           ))}
         </div>

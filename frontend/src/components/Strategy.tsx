@@ -17,7 +17,7 @@ import {
   result
 } from "@permaweb/aoconnect";
 
-import {VAULT, AO_TOKEN} from "../constants/yao_process";
+import { VAULT, AO_TOKEN } from "../constants/yao_process";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function StrategyDetail() {
@@ -50,85 +50,85 @@ export default function StrategyDetail() {
   // integrate deposit and withdraw logic
 
   const deposit = useMutation({
-		mutationKey: ["Transfer"],
-		mutationFn: async () => {
-			const messageId = await message({
-				process: AO_TOKEN,
-				tags: [
-					{
-						name: "Action",
-						value: "Transfer",
-					},
-					{
-						name: "Recipient",
-						value: VAULT,
-					},
-					{
-						name: "Quantity",
-						value: depositAmount,
-					}
-				],
-				data: "",
-				signer: createDataItemSigner(window.arweaveWallet),
-			});
+    mutationKey: ["Transfer"],
+    mutationFn: async () => {
+      const messageId = await message({
+        process: AO_TOKEN,
+        tags: [
+          {
+            name: "Action",
+            value: "Transfer",
+          },
+          {
+            name: "Recipient",
+            value: VAULT,
+          },
+          {
+            name: "Quantity",
+            value: depositAmount,
+          }
+        ],
+        data: "",
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
 
-			const messageResult = await result({
-				process: AO_TOKEN,
-				message: messageId,
-			});
+      const messageResult = await result({
+        process: AO_TOKEN,
+        message: messageId,
+      });
 
-			if (messageResult.Messages[0].Data) {
-				return JSON.parse(messageResult.Messages[0].Data);
-			}
+      if (messageResult.Messages[0].Data) {
+        return JSON.parse(messageResult.Messages[0].Data);
+      }
 
-			return undefined;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries();
-		},
-	});
+      return undefined;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
 
 
   const withdraw = useMutation({
-		mutationKey: ["Withdraw"],
-		mutationFn: async () => {
-			const messageId = await message({
-				process: VAULT,
-				tags: [
-					{
-						name: "Action",
-						value: "Withdraw",
-					},
-					{
-						name: "Token-Id",
-						value: AO_TOKEN,
-					},
-					{
-						name: "Quantity",
-						value: withdrawAmount,
-					}
-				],
-				data: "",
-				signer: createDataItemSigner(window.arweaveWallet),
-			});
+    mutationKey: ["Withdraw"],
+    mutationFn: async () => {
+      const messageId = await message({
+        process: VAULT,
+        tags: [
+          {
+            name: "Action",
+            value: "Withdraw",
+          },
+          {
+            name: "Token-Id",
+            value: AO_TOKEN,
+          },
+          {
+            name: "Quantity",
+            value: withdrawAmount,
+          }
+        ],
+        data: "",
+        signer: createDataItemSigner(window.arweaveWallet),
+      });
 
-			const messageResult = await result({
-				process: VAULT,
-				message: messageId,
-			});
+      const messageResult = await result({
+        process: VAULT,
+        message: messageId,
+      });
 
-			console.log(messageResult)
-			if (messageResult.Messages[0].Data) {
-				console.log(messageResult.Messages[0].Data)
-				return JSON.parse(messageResult.Messages[0].Data);
-			}
+      console.log(messageResult)
+      if (messageResult.Messages[0].Data) {
+        console.log(messageResult.Messages[0].Data)
+        return JSON.parse(messageResult.Messages[0].Data);
+      }
 
-			return undefined;
-		},
-		onSuccess: () => {
-			queryClient.invalidateQueries();
-		},
-	});
+      return undefined;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
 
 
   // end integrate deposit and withdraw logic  
@@ -239,22 +239,20 @@ export default function StrategyDetail() {
             <div className="flex space-x-4">
               <Button
                 onClick={() => setDepositWithdrawTab("deposit")}
-                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${
-                  depositWithdrawTab === "deposit"
+                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${depositWithdrawTab === "deposit"
                     ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
                     : "bg-transparent text-[#25A8CF]"
-                }`}
+                  }`}
               >
                 Deposit
               </Button>
               <Button
                 onClick={() => setDepositWithdrawTab("withdraw")}
                 variant="default"
-                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${
-                  depositWithdrawTab === "withdraw"
+                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${depositWithdrawTab === "withdraw"
                     ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
                     : "bg-transparent text-[#25A8CF]"
-                }`}
+                  }`}
               >
                 Withdraw
               </Button>
@@ -362,11 +360,10 @@ export default function StrategyDetail() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab.toLowerCase())}
-                    className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${
-                      activeTab === tab.toLowerCase()
+                    className={`pb-2 text-xs sm:text-sm font-medium p-1 px-2 sm:px-4 rounded-tr-md rounded-tl-md transition-colors ${activeTab === tab.toLowerCase()
                         ? "bg-[#ECECEC] dark:bg-[#161E24] text-[#565E64] dark:text-[#F5FBFF]"
                         : "border border-[#EAEAEA] dark:border-[#192127] text-[#7e868c] hover:text-[#1a2228] dark:hover:text-[#7e868c80]"
-                    }`}
+                      }`}
                   >
                     {tab}
                   </button>
