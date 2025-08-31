@@ -20,6 +20,7 @@ import verified from "../../public/verified.svg";
 import DashboardFooter from "./dashboard/dashboard_footer";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { RecommendButton } from "./recommendation";
+import { getRandomRecommendationPoolId } from "../services/aoService";
 import { usePools } from "../contexts/PoolContext";
 import { getUserAgents, type AgentRecord } from "../services/aoService";
 
@@ -58,6 +59,11 @@ export default function Dashboard() {
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
   const [agentsError, setAgentsError] = useState<string | null>(null);
+
+  // Random recommendation UI state
+  const [randomLoading, setRandomLoading] = useState(false);
+  const [randomError, setRandomError] = useState<string | null>(null);
+  const [randomSelectedPoolId, setRandomSelectedPoolId] = useState<string | null>(null);
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -118,6 +124,32 @@ export default function Dashboard() {
     },
     [tokenLogos]
   );
+
+  // Trigger random recommendation
+  const handleRandomRecommend = useCallback(async () => {
+    try {
+      setRandomError(null);
+      setRandomLoading(true);
+      setRandomSelectedPoolId(null);
+
+      const poolId = await getRandomRecommendationPoolId();
+      setRandomSelectedPoolId(poolId);
+    } catch (e) {
+      console.error("Random recommendation failed", e);
+      setRandomError(
+        e instanceof Error ? e.message : "Failed to get random recommendation"
+      );
+    } finally {
+      setRandomLoading(false);
+    }
+  }, []);
+
+  // Display random error (if any)
+  useEffect(() => {
+    if (randomError) {
+      console.error("Random recommendation error:", randomError);
+    }
+  }, [randomError]);
 
   const isStableToken = useMemo(
     () =>
@@ -297,10 +329,10 @@ export default function Dashboard() {
   const fetchedStrategies = useMemo(
     () =>
       strategies.map((strategy) => {
-        console.log("strategy in dashboard", strategy);
+        // console.log("strategy in dashboard", strategy);
         // Find the corresponding pool to get token IDs for logos
 
-        console.log("pools in dashboard XXXXXXXXXXXXXXX", pools);
+        // console.log("pools in dashboard XXXXXXXXXXXXXXX", pools);
         const pool = pools.find(
           (p) =>
             p.amm_process === strategy.id ||
@@ -492,8 +524,32 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="flex items-center mb-1">
+          <div className="flex items-center gap-2 mb-1">
             <RecommendButton />
+            <Button
+              onClick={handleRandomRecommend}
+              disabled={randomLoading}
+              className="bg-[#1A2228] hover:bg-[#10161b] dark:bg-[#F5FBFF] dark:text-[#1A2228] dark:hover:bg-[#e7eef5]"
+            >
+              {randomLoading ? (
+                <div className="flex items-center gap-2">
+                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white dark:border-[#1A2228]"></span>
+                  Random Recommend
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path d="M13.5 3a1.5 1.5 0 0 0-3 0v1.05a7.5 7.5 0 1 0 3 0V3Zm-1.5 6.75a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-3a.75.75 0 0 1 .75-.75Zm0 7.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Z" />
+                  </svg>
+                  Random Recommend
+                </div>
+              )}
+            </Button>
           </div>
         </div>
 
@@ -683,7 +739,11 @@ export default function Dashboard() {
                           </div>
                         </div>
                       ))
-                    : fetchedStrategies.map((strategy, index) => (
+                    : fetchedStrategies
+                        .filter((s) =>
+                          randomSelectedPoolId ? s.id === randomSelectedPoolId : true
+                        )
+                        .map((strategy, index) => (
                         <Link key={index} to={`/strategy/${strategy.id}`}>
                           <div
                             className={`grid grid-cols-7 gap-4 p-4 mb-2 rounded-br-lg rounded-bl-lg bg-[#F3F3F3] hover:bg-[#f7f7f6] dark:hover:bg-[#20282E] dark:bg-[#141C22] transition-colors cursor-pointer relative`}
@@ -819,7 +879,11 @@ export default function Dashboard() {
 
             {/* Mobile/Tablet Card View */}
             <div className="lg:hidden space-y-3 sm:space-y-4 relative">
-              {fetchedStrategies.map((strategy, index) => (
+              {fetchedStrategies
+                .filter((s) =>
+                  randomSelectedPoolId ? s.id === randomSelectedPoolId : true
+                )
+                .map((strategy, index) => (
                 <Link key={index} to={`/strategy/${strategy.id}`}>
                   <div className="relative">
                     {strategy.isStrategy && (

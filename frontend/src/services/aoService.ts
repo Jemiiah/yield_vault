@@ -119,6 +119,96 @@ export async function getAIRecommendations(
   }
 }
 
+export interface RandomRecommendation {
+  pool_id: string;
+  dex: string;
+  token_pair: string;
+  apy: string;
+  risk_level: string;
+  reasoning: string;
+  entropy?: number;
+  callback_id?: string;
+}
+
+export interface RandomRecommendationResponse {
+  recommendation: RandomRecommendation;
+}
+
+/**
+ * Request a random recommendation and wait (poll) until available.
+ * Returns the selected pool_id.
+ */
+export async function getRandomRecommendationPoolId(
+  { pollIntervalMs = 1500, maxAttempts = 20 }: { pollIntervalMs?: number; maxAttempts?: number } = {}
+): Promise<string> {
+  console.log("Requesting random recommendation from Manager Contract");
+
+  if (!window.arweaveWallet) {
+    throw new Error("Wallet not connected");
+  }
+
+  // Send request
+  const messageId = await message({
+    process: MANAGER_CONTRACT,
+    tags: [{ name: "Action", value: "Get-Random-Recommendation" }],
+    signer: createDataItemSigner(window.arweaveWallet),
+  });
+
+  const initial = await result({ message: messageId, process: MANAGER_CONTRACT });
+  const immediate = tryParseRandomResponse(initial);
+  if (immediate?.pool_id) {
+    return immediate.pool_id;
+  }
+
+  const { sessionId, callbackId } = extractRandomSession(initial);
+  if (!sessionId && !callbackId) {
+    throw new Error("No session identifiers returned for random recommendation");
+  }
+
+  // Poll status via dryrun
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise((r) => setTimeout(r, pollIntervalMs));
+
+    const response = await dryrun({
+      process: MANAGER_CONTRACT,
+      tags: [
+        { name: "Action", value: "Get-Random-Recommendation-Status" },
+        ...(sessionId ? [{ name: "Session-Id", value: sessionId }] : []),
+        ...(callbackId ? [{ name: "Callback-Id", value: callbackId }] : []),
+      ],
+    });
+
+    const parsed = tryParseRandomResponse(response);
+    if (parsed?.pool_id) {
+      return parsed.pool_id;
+    }
+  }
+
+  throw new Error("Random recommendation timed out");
+}
+
+function extractRandomSession(response: any): { sessionId?: string; callbackId?: string } {
+  if (!response?.Messages?.length) return {};
+  const lastMessage = response.Messages[response.Messages.length - 1];
+  const getTag = (n: string) => lastMessage.Tags?.find((t: any) => t.name === n)?.value;
+  const sessionId = getTag("Session-Id");
+  const callbackId = getTag("Callback-Id");
+  return { sessionId, callbackId };
+}
+
+function tryParseRandomResponse(response: any): { pool_id?: string } | undefined {
+  try {
+    if (!response?.Messages?.length) return;
+    const lastMessage = response.Messages[response.Messages.length - 1];
+    const action = lastMessage.Tags?.find((t: any) => t.name === "Action")?.value;
+    if (action !== "Random-Recommendation-Response") return;
+    const data = JSON.parse(lastMessage.Data) as RandomRecommendationResponse;
+    return { pool_id: data?.recommendation?.pool_id };
+  } catch (e) {
+    console.warn("Failed to parse random recommendation response", e);
+  }
+}
+
 /**
  * Parse AI recommendations response and convert to Pool format
  */
