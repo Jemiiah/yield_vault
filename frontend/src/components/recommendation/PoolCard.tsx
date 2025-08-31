@@ -82,18 +82,23 @@ export default function PoolCard({
     if (pool.token0) fetchTokenLogo(pool.token0);
     if (pool.token1) fetchTokenLogo(pool.token1);
   }, [pool.token0, pool.token1, fetchTokenLogo]);
+  const SPECIAL_BASE = "0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc";
   const determineBaseToken = (pool: Pool): string => {
-    // Always use token1 as base token as suggested
+    const t0 = pool.token0 || "";
+    const t1 = pool.token1 || "";
+    if (t0 === SPECIAL_BASE || t1 === SPECIAL_BASE) return SPECIAL_BASE;
     const baseToken = pool.token1 || AO_TOKEN;
-    console.log("Determining base token:", { poolId: pool.id, token1: pool.token1, baseToken });
+    console.log("Determining base token:", { poolId: pool.id, token0: pool.token0, token1: pool.token1, baseToken });
     return baseToken;
   };
 
   const determineTokenOut = (pool: Pool): string => {
-    // Always use token0 as out token as suggested
-    const tokenOut = pool.token0 || AO_TOKEN;
-    console.log("Determining token out:", { poolId: pool.id, token0: pool.token0, tokenOut });
-    return tokenOut;
+    const base = determineBaseToken(pool);
+    const t0 = pool.token0 || "";
+    const t1 = pool.token1 || "";
+    const tokenOut = base === t0 ? t1 : t0;
+    console.log("Determining token out:", { poolId: pool.id, token0: pool.token0, token1: pool.token1, tokenOut });
+    return tokenOut || AO_TOKEN;
   };
 
   const handleAgentDeploy = async () => {

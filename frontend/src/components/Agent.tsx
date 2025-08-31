@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import {
 } from "../services/aoService";
 import { createDataItemSigner, message, result } from "@permaweb/aoconnect";
 import { AO_TOKEN } from "../constants/yao_process";
+import { getTokenBalance } from "../services/aoService";
 
 export default function Agent() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function Agent() {
   const [transferError, setTransferError] = useState<string | null>(null);
   const [isDepositing, setIsDepositing] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [baseTokenBalance, setBaseTokenBalance] = useState<string>("0");
   // const [isExecuting, setIsExecuting] = useState(false);
 
   // Fetch agent info
@@ -59,14 +61,23 @@ export default function Agent() {
     fetchAgentInfo();
   }, [agentId]);
 
+  const SPECIAL_BASE = "0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc";
+  const determineBaseToken = React.useCallback(() => {
+    if (!agentInfo) return AO_TOKEN;
+    const base = agentInfo["Base-Token"];
+    if (base === SPECIAL_BASE || agentInfo["Token-Out"] === SPECIAL_BASE) return SPECIAL_BASE;
+    return base || AO_TOKEN;
+  }, [agentInfo]);
+
   const handleDeposit = async () => {
     if (!depositAmount || !agentId) return;
 
     setIsDepositing(true);
     setTransferError(null);
     try {
+      const baseToken = determineBaseToken();
       const messageId = await message({
-        process: AO_TOKEN,
+        process: baseToken,
         tags: [
           { name: "Action", value: "Transfer" },
           { name: "Recipient", value: agentId },
@@ -77,7 +88,7 @@ export default function Agent() {
       });
 
       const messageResult = await result({
-        process: AO_TOKEN,
+        process: baseToken,
         message: messageId,
       });
 
@@ -137,6 +148,22 @@ export default function Agent() {
       setAgentInfoError(null);
     }
   }, [agentInfo]);
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      try {
+        if (!agentInfo) return;
+        const address = await (window as unknown as { arweaveWallet?: { getActiveAddress?: () => Promise<string> } }).arweaveWallet?.getActiveAddress?.();
+        if (!address) return;
+        const baseToken = determineBaseToken();
+        const bal = await getTokenBalance(baseToken, address);
+        setBaseTokenBalance(bal);
+      } catch (e) {
+        console.warn("Failed to load base token balance:", e);
+      }
+    };
+    loadBalance();
+  }, [agentInfo, determineBaseToken]);
 
   // Skeleton components
   const SkeletonCard = ({
@@ -514,12 +541,10 @@ export default function Agent() {
                     </div>
                     <div className="text-right">
                       <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">
-                        {depositWithdrawTab === "deposit"
-                          ? "Wallet Balance"
-                          : "Agent Balance"}
+                        {depositWithdrawTab === "deposit" ? "Wallet Balance" : "Agent Balance"}
                       </div>
                       <div className="font-medium text-lg text-[#565E64] dark:text-[#EAEAEA]">
-                        Loading...
+                        {depositWithdrawTab === "deposit" ? baseTokenBalance : "Loading..."}
                       </div>
                     </div>
                   </div>

@@ -27,6 +27,7 @@ import {
   getUserAgents,
   spawnAgent,
   type AgentRecord,
+  getTokenBalance,
 } from "../services/aoService";
 
 interface ArweaveWalletWindow {
@@ -64,6 +65,7 @@ export default function StrategyDetail() {
   // User agent state
   const [userAddress, setUserAddress] = useState<string | null>(null);
   const [relevantAgent, setRelevantAgent] = useState<AgentRecord | null>(null);
+  const [baseTokenBalance, setBaseTokenBalance] = useState<string>("0");
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -163,6 +165,24 @@ export default function StrategyDetail() {
     fetchAddress();
   }, []);
 
+  // Determine base/out tokens: prefer the special token as base
+  const SPECIAL_BASE = "0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc";
+  const determineBaseToken = React.useCallback((p: typeof pool): string => {
+    if (!p) return AO_TOKEN;
+    const t0 = (p.token0 as string) || "";
+    const t1 = (p.token1 as string) || "";
+    if (t0 === SPECIAL_BASE || t1 === SPECIAL_BASE) return SPECIAL_BASE;
+    return t1 || AO_TOKEN;
+  }, []);
+
+  const determineTokenOut = (p: typeof pool): string => {
+    if (!p) return AO_TOKEN;
+    const base = determineBaseToken(p);
+    const t0 = (p.token0 as string) || "";
+    const t1 = (p.token1 as string) || "";
+    return base === t0 ? t1 : t0;
+  };
+
   // Fetch user's agents when we have an address, then find agent for this pool
   React.useEffect(() => {
     const fetchAgents = async () => {
@@ -178,6 +198,13 @@ export default function StrategyDetail() {
             a.config?.PoolIdOverride === poolIdForMatch
         );
         setRelevantAgent(match || null);
+
+        // Update base token balance after fetching agents
+        const baseToken = determineBaseToken(pool);
+        if (baseToken) {
+          const bal = await getTokenBalance(baseToken, userAddress);
+          setBaseTokenBalance(bal);
+        }
       } catch {
         console.error("Failed to fetch user agents:")
         setAgentError("Unable to load your agents. Connect wallet and retry.");
@@ -185,17 +212,8 @@ export default function StrategyDetail() {
     };
 
     fetchAgents();
-  }, [userAddress, id, pool?.amm_process]);
+  }, [userAddress, id, pool, pool?.amm_process, determineBaseToken]);
 
-  const determineBaseToken = (p: typeof pool): string => {
-    if (!p) return AO_TOKEN;
-    return (p.token1 as string) || AO_TOKEN;
-  };
-
-  const determineTokenOut = (p: typeof pool): string => {
-    if (!p) return AO_TOKEN;
-    return (p.token0 as string) || AO_TOKEN;
-  };
 
   const handleDeployAgent = async () => {
     if (!pool) return;
@@ -257,8 +275,9 @@ export default function StrategyDetail() {
         throw new Error("No agent deployed for this pool");
       }
 
+      const baseTokenProcess = determineBaseToken(pool);
       const messageId = await message({
-        process: AO_TOKEN,
+        process: baseTokenProcess,
         tags: [
           { name: "Action", value: "Transfer" },
           { name: "Recipient", value: relevantAgent.process_id },
@@ -269,7 +288,7 @@ export default function StrategyDetail() {
       });
 
       const messageResult = await result({
-        process: AO_TOKEN,
+        process: baseTokenProcess,
         message: messageId,
       });
 
@@ -1055,11 +1074,9 @@ export default function StrategyDetail() {
                         </svg>
                       </div>
                       <div className="text-right">
-                        <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">
-                          Wallet Balance
-                        </div>
+                        <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">Wallet Balance</div>
                         <div className="font-medium text-lg text-[#565E64] dark:text-[#EAEAEA]">
-                          $ {pool?.walletBalance || "0"}
+                          {baseTokenBalance}
                         </div>
                       </div>
                     </div>

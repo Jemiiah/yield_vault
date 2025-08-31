@@ -451,6 +451,43 @@ export interface AgentInfo {
 }
 
 /**
+ * Get a user's balance for a given token (AO token process) via dryrun
+ */
+export async function getTokenBalance(
+  tokenProcessId: string,
+  address: string
+): Promise<string> {
+  try {
+    const tryOnce = async (actionName: string) =>
+      await dryrun({
+        process: tokenProcessId,
+        tags: [
+          { name: "Action", value: actionName },
+          { name: "Target", value: address },
+        ],
+      });
+
+    const response = await tryOnce("Balance");
+
+    if (response?.Messages && response.Messages.length > 0) {
+      const lastMessage = response.Messages[response.Messages.length - 1];
+      if (lastMessage.Data) {
+        return String(lastMessage.Data);
+      }
+      const balTag = lastMessage.Tags?.find(
+        (t: { name: string; value: string }) => t.name === "Balance"
+      );
+      if (balTag?.value) {
+        return balTag.value;
+      }
+    }
+  } catch (error) {
+    console.warn("getTokenBalance failed:", error);
+  }
+  return "0";
+}
+
+/**
  * Get agent info by calling Info action on the agent process
  */
 export async function getAgentInfo(
