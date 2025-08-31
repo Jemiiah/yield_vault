@@ -23,14 +23,6 @@ export interface APUSOptions {
   max_tokens: number;
 }
 
-// Dapp context information for APUS AI
-export interface DappContext {
-  name: string;
-  description: string;
-  features: string[];
-  currentInfo?: string;
-}
-
 export class APUSService {
   private static instance: APUSService;
 
@@ -48,38 +40,6 @@ export class APUSService {
     return `${config.aoProcessId}-${Date.now()}-${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-  }
-
-  // Dapp context data
-  private dappContext: DappContext = {
-    name: "YAO (Yield Aggregator Optimizer)",
-    description:
-      "A DeFi dapp built on AO (Arweave) that helps users find the best yield farming opportunities and provides risk assessment for different pools.",
-    features: [
-      "Yield farming optimization",
-      "Risk assessment for pools",
-      "Automated yield strategies",
-      "Multi-chain support",
-      "Portfolio tracking",
-      "AI-powered recommendations",
-      "Chatbot assistance",
-    ],
-    currentInfo:
-      "YAO is currently in development and supports yield farming across multiple protocols.",
-  };
-
-  // Get dapp context for APUS AI
-  private getDappContext(): string {
-    return `Context: ${this.dappContext.name} - ${
-      this.dappContext.description
-    }. Features: ${this.dappContext.features.join(", ")}. ${
-      this.dappContext.currentInfo
-    }\n\nUser Question: `;
-  }
-
-  // Update dapp context (useful for dynamic updates)
-  public updateDappContext(updates: Partial<DappContext>): void {
-    this.dappContext = { ...this.dappContext, ...updates };
   }
 
   // Send prompt to APUS
@@ -103,10 +63,7 @@ export class APUSService {
 
     const finalOptions = { ...defaultOptions, ...options };
 
-    // Add dapp context to the prompt
-    const contextualizedPrompt = this.getDappContext() + promptText;
-
-    console.log("Sending prompt:", contextualizedPrompt);
+    console.log("Sending prompt:", promptText);
     console.log("Using reference:", reference);
     console.log("Options:", finalOptions);
 
@@ -125,7 +82,7 @@ export class APUSService {
           },
           { name: "X-Options", value: JSON.stringify(finalOptions) },
         ],
-        data: contextualizedPrompt, // Send the contextualized prompt in data field
+        data: promptText, // Send the prompt in data field
         signer: createDataItemSigner(window.arweaveWallet),
       });
 
