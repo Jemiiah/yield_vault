@@ -79,6 +79,7 @@ export async function getAIRecommendations(
       process: MANAGER_CONTRACT,
       tags: [{ name: "Action", value: "Get-AI-Recommendations" }],
       data: JSON.stringify(riskData),
+      signer: createDataItemSigner(window.arweaveWallet),
     });
 
     console.log("AI recommendations request sent, message ID:", messageId);
@@ -258,6 +259,7 @@ export async function spawnAgent(config: AgentSpawnConfig): Promise<string> {
           ? [{ name: "Pool-Id-Reference", value: config.poolIdReference }]
           : []),
       ],
+      signer: createDataItemSigner(window.arweaveWallet),
     });
 
     console.log("Agent spawn request sent, message ID:", messageId);
