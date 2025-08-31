@@ -18,11 +18,22 @@ import DashboardFooter from "./dashboard/dashboard_footer";
 import { createDataItemSigner, message, result } from "@permaweb/aoconnect";
 
 import { usePools } from "../contexts/PoolContext";
-import { VAULT, AO_TOKEN } from "../constants/yao_process";
+import { AO_TOKEN } from "../constants/yao_process";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { getTokenInfo } from "../helpers/token";
 // import user_circle from "../../public/user-circle.svg";
+import {
+  getUserAgents,
+  spawnAgent,
+  type AgentRecord,
+} from "../services/aoService";
+
+interface ArweaveWalletWindow {
+  arweaveWallet?: {
+    getActiveAddress?: () => Promise<string>;
+  };
+}
 
 export default function StrategyDetail() {
   const queryClient = useQueryClient();
@@ -39,10 +50,20 @@ export default function StrategyDetail() {
   const strategy = id ? getStrategyById(id) : undefined;
 
   const [depositAmount, setDepositAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositWithdrawTab, setDepositWithdrawTab] = useState("deposit");
   const [activeTab, setActiveTab] = useState("manage");
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeployingAgent, setIsDeployingAgent] = useState(false);
+  const [agentError, setAgentError] = useState<string | null>(null);
+  const [deployStartDate, setDeployStartDate] = useState<string>("");
+  const [deployEndDate, setDeployEndDate] = useState<string>("");
+  const [deployRunIndefinitely, setDeployRunIndefinitely] = useState<boolean>(
+    false
+  );
+
+  // User agent state
+  const [userAddress, setUserAddress] = useState<string | null>(null);
+  const [relevantAgent, setRelevantAgent] = useState<AgentRecord | null>(null);
 
   // State for token logos
   const [tokenLogos, setTokenLogos] = useState<Record<string, string>>({});
@@ -129,26 +150,119 @@ export default function StrategyDetail() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch connected wallet address once
+  React.useEffect(() => {
+    const fetchAddress = async () => {
+      try {
+        const addr = await (window as unknown as ArweaveWalletWindow).arweaveWallet?.getActiveAddress?.();
+        if (addr) setUserAddress(addr);
+      } catch {
+        // ignore; UI will prompt to connect if needed
+      }
+    };
+    fetchAddress();
+  }, []);
+
+  // Fetch user's agents when we have an address, then find agent for this pool
+  React.useEffect(() => {
+    const fetchAgents = async () => {
+      if (!userAddress) return;
+      try {
+        setAgentError(null);
+        const agents = await getUserAgents(userAddress);
+
+        const poolIdForMatch = pool?.amm_process || id || "";
+        const match = agents.find(
+          (a) =>
+            a.pool_id === poolIdForMatch ||
+            a.config?.PoolIdOverride === poolIdForMatch
+        );
+        setRelevantAgent(match || null);
+      } catch {
+        console.error("Failed to fetch user agents:")
+        setAgentError("Unable to load your agents. Connect wallet and retry.");
+      }
+    };
+
+    fetchAgents();
+  }, [userAddress, id, pool?.amm_process]);
+
+  const determineBaseToken = (p: typeof pool): string => {
+    if (!p) return AO_TOKEN;
+    return (p.token1 as string) || AO_TOKEN;
+  };
+
+  const determineTokenOut = (p: typeof pool): string => {
+    if (!p) return AO_TOKEN;
+    return (p.token0 as string) || AO_TOKEN;
+  };
+
+  const handleDeployAgent = async () => {
+    if (!pool) return;
+    try {
+      setIsDeployingAgent(true);
+      setAgentError(null);
+      const baseToken = determineBaseToken(pool);
+      const tokenOut = determineTokenOut(pool);
+      const poolIdForConfig = pool.amm_process || (id as string);
+
+      const now = Math.floor(Date.now() / 1000);
+      const startTs = deployStartDate
+        ? Math.floor(new Date(deployStartDate).getTime() / 1000)
+        : now;
+      const endTs = deployRunIndefinitely
+        ? Number.MAX_SAFE_INTEGER
+        : deployEndDate
+        ? Math.floor(new Date(deployEndDate).getTime() / 1000)
+        : now + 30 * 24 * 60 * 60;
+      await spawnAgent({
+        dex: "Botega",
+        tokenOut,
+        slippage: 2,
+        startDate: startTs,
+        endDate: endTs,
+        runIndefinitely: deployRunIndefinitely,
+        conversionPercentage: 50,
+        strategyType: "Swap50LP50",
+        baseToken,
+        poolId: poolIdForConfig,
+        poolIdReference: pool.id || poolIdForConfig,
+      });
+
+      if (userAddress) {
+        const agents = await getUserAgents(userAddress);
+        const match = agents.find(
+          (a) =>
+            a.pool_id === poolIdForConfig ||
+            a.config?.PoolIdOverride === poolIdForConfig
+        );
+        setRelevantAgent(match || null);
+      }
+    } catch (e: unknown) {
+      console.error("Agent deployment failed:", e);
+      setAgentError(
+        e instanceof Error ? e.message : "Agent deployment failed."
+      );
+    } finally {
+      setIsDeployingAgent(false);
+    }
+  };
+
   // integrate deposit and withdraw logic
 
   const deposit = useMutation({
     mutationKey: ["Transfer"],
     mutationFn: async () => {
+      if (!relevantAgent?.process_id) {
+        throw new Error("No agent deployed for this pool");
+      }
+
       const messageId = await message({
         process: AO_TOKEN,
         tags: [
-          {
-            name: "Action",
-            value: "Transfer",
-          },
-          {
-            name: "Recipient",
-            value: VAULT,
-          },
-          {
-            name: "Quantity",
-            value: depositAmount,
-          },
+          { name: "Action", value: "Transfer" },
+          { name: "Recipient", value: relevantAgent.process_id },
+          { name: "Quantity", value: depositAmount },
         ],
         data: "",
         signer: createDataItemSigner(window.arweaveWallet),
@@ -170,46 +284,46 @@ export default function StrategyDetail() {
     },
   });
 
-  const withdraw = useMutation({
-    mutationKey: ["Withdraw"],
-    mutationFn: async () => {
-      const messageId = await message({
-        process: VAULT,
-        tags: [
-          {
-            name: "Action",
-            value: "Withdraw",
-          },
-          {
-            name: "Token-Id",
-            value: AO_TOKEN,
-          },
-          {
-            name: "Quantity",
-            value: withdrawAmount,
-          },
-        ],
-        data: "",
-        signer: createDataItemSigner(window.arweaveWallet),
-      });
+  // const withdraw = useMutation({
+  //   mutationKey: ["Withdraw"],
+  //   mutationFn: async () => {
+  //     const messageId = await message({
+  //       process: VAULT,
+  //       tags: [
+  //         {
+  //           name: "Action",
+  //           value: "Withdraw",
+  //         },
+  //         {
+  //           name: "Token-Id",
+  //           value: AO_TOKEN,
+  //         },
+  //         {
+  //           name: "Quantity",
+  //           value: withdrawAmount,
+  //         },
+  //       ],
+  //       data: "",
+  //       signer: createDataItemSigner(window.arweaveWallet),
+  //     });
 
-      const messageResult = await result({
-        process: VAULT,
-        message: messageId,
-      });
+  //     const messageResult = await result({
+  //       process: VAULT,
+  //       message: messageId,
+  //     });
 
-      console.log(messageResult);
-      if (messageResult.Messages[0].Data) {
-        console.log(messageResult.Messages[0].Data);
-        return JSON.parse(messageResult.Messages[0].Data);
-      }
+  //     console.log(messageResult);
+  //     if (messageResult.Messages[0].Data) {
+  //       console.log(messageResult.Messages[0].Data);
+  //       return JSON.parse(messageResult.Messages[0].Data);
+  //     }
 
-      return undefined;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-    },
-  });
+  //     return undefined;
+  //   },
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries();
+  //   },
+  // });
 
   // end integrate deposit and withdraw logic
 
@@ -850,13 +964,10 @@ export default function StrategyDetail() {
                 Deposit
               </Button>
               <Button
-                onClick={() => setDepositWithdrawTab("withdraw")}
                 variant="default"
-                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm ${
-                  depositWithdrawTab === "withdraw"
-                    ? "bg-[#D6EEF6] dark:bg-[#052834] dark:text-[#30CFFF] hover:bg-[#D6EEF6]/60 text-[#25A8CF]"
-                    : "bg-transparent text-[#25A8CF]"
-                }`}
+                className={`flex-1 py-7 rounded-tl-2xl rounded-tr-2xl rounded-bl-sm rounded-br-sm bg-transparent text-[#25A8CF] opacity-50 cursor-not-allowed`}
+                disabled
+                title="Withdraw is managed on the Agent page"
               >
                 Withdraw
               </Button>
@@ -864,100 +975,129 @@ export default function StrategyDetail() {
 
             <Card className="bg-[#F3F3F3] dark:bg-[#141C22] dark:border-[#083341] border-none md:dark:border-solid ">
               <CardContent className="px-6 py-3">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2 border border-[#DAD9D9E5] dark:border-[#222A30] p-2 rounded-3xl cursor-pointer">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center">
-                        <img
-                          src={ao_token}
-                          alt="ao token"
-                          className=" rounded-full"
+                {agentError && !relevantAgent && (
+                  <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-red-600 dark:text-red-400 text-sm">{agentError}</p>
+                  </div>
+                )}
+                {!relevantAgent ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-lg bg-[#FFF5F5] dark:bg-[#2D1B1B] border border-[#FECACA] dark:border-[#4A2F2F] text-[#565E64] dark:text-[#EAEAEA] text-sm">
+                      No agent is deployed for this pool yet. Deploy an agent to enable deposits.
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-[#7e868c] dark:text-[#95A0A6]">Start Date</label>
+                        <input
+                          type="datetime-local"
+                          className="w-full rounded-md bg-[#EAEAEA] dark:bg-[#1B2329] text-[#1A2228] dark:text-[#EAEAEA] p-2"
+                          value={deployStartDate}
+                          onChange={(e) => setDeployStartDate(e.target.value)}
                         />
                       </div>
-                      <span className="font-medium dark:text-[#EAEAEA]">
-                        AO
-                      </span>
-                      <svg
-                        className="w-4 h-4 text-[#7e868c]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
+                      <div className="space-y-1">
+                        <label className="text-xs text-[#7e868c] dark:text-[#95A0A6]">End Date</label>
+                        <input
+                          type="datetime-local"
+                          className="w-full rounded-md bg-[#EAEAEA] dark:bg-[#1B2329] text-[#1A2228] dark:text-[#EAEAEA] p-2 disabled:opacity-50"
+                          value={deployEndDate}
+                          onChange={(e) => setDeployEndDate(e.target.value)}
+                          disabled={deployRunIndefinitely}
                         />
-                      </svg>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">
-                        {depositWithdrawTab === "deposit"
-                          ? "Wallet Balance"
-                          : "Staked Balance"}
                       </div>
-                      <div className="font-medium text-lg text-[#565E64] dark:text-[#EAEAEA]">
-                        $ {pool?.walletBalance || "0"}
+                      <div className="flex items-center gap-2">
+                        <input
+                          id="run-indef"
+                          type="checkbox"
+                          checked={deployRunIndefinitely}
+                          onChange={(e) => setDeployRunIndefinitely(e.target.checked)}
+                        />
+                        <label htmlFor="run-indef" className="text-xs text-[#7e868c] dark:text-[#95A0A6]">
+                          Run indefinitely
+                        </label>
+                      </div>
+                      
+                    </div>
+                    <Button
+                      className="w-full !mt-2 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
+                      onClick={handleDeployAgent}
+                      disabled={isDeployingAgent || !userAddress}
+                    >
+                      {isDeployingAgent ? "Deploying..." : "Deploy Agent"}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2 border border-[#DAD9D9E5] dark:border-[#222A30] p-2 rounded-3xl cursor-pointer">
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center">
+                          <img
+                            src={ao_token}
+                            alt="ao token"
+                            className=" rounded-full"
+                          />
+                        </div>
+                        <span className="font-medium dark:text-[#EAEAEA]">
+                          AO
+                        </span>
+                        <svg
+                          className="w-4 h-4 text-[#7e868c]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[#7E868C] dark:text-[#95A0A6] text-sm">
+                          Wallet Balance
+                        </div>
+                        <div className="font-medium text-lg text-[#565E64] dark:text-[#EAEAEA]">
+                          $ {pool?.walletBalance || "0"}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="relative flex items-center justify-between space-x-4">
-                    <Input
-                      type="text"
-                      placeholder="$ 0.00"
-                      value={
-                        depositWithdrawTab === "deposit"
-                          ? depositAmount
-                          : withdrawAmount
-                      }
-                      onChange={(e) => {
-                        if (depositWithdrawTab === "deposit") {
-                          setDepositAmount(e.target.value);
-                        } else {
-                          setWithdrawAmount(e.target.value);
-                        }
-                      }}
-                      className="text-left text-2xl py-7 text-[#95A0A6] w-full border-none bg-[#EAEAEA] dark:bg-[#1B2329] focus:ring-0"
-                    />
-                    <div className="">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-[#7E868C] gradient-card px-4 py-7"
-                        onClick={() => {
-                          if (depositWithdrawTab === "deposit") {
-                            setDepositAmount(
-                              String(strategy?.walletBalance || "")
-                            );
-                          } else {
-                            setWithdrawAmount(
-                              String(strategy?.walletBalance || "")
-                            );
-                          }
-                        }}
-                      >
-                        Max
-                      </Button>
+                    <div className="relative flex items-center justify-between space-x-4">
+                      <Input
+                        type="text"
+                        placeholder="$ 0.00"
+                        value={depositAmount}
+                        onChange={(e) => setDepositAmount(e.target.value)}
+                        className="text-left text-2xl py-7 text-[#95A0A6] w-full border-none bg-[#EAEAEA] dark:bg-[#1B2329] focus:ring-0"
+                      />
+                      <div className="">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-[#7E868C] gradient-card px-4 py-7"
+                          onClick={() => {
+                            setDepositAmount(String(strategy?.walletBalance || ""));
+                          }}
+                        >
+                          Max
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className=" text-[#7e868c] text-xs">≈ 0.00 AR</div>
+                    <div className=" text-[#7e868c] text-xs">≈ 0.00 AR</div>
 
-                  <Button
-                    className="w-full !mt-7 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
-                    disabled={!(depositAmount || withdrawAmount)}
-                    onClick={() => {
-                      if (depositWithdrawTab === "deposit") {
+                    <Button
+                      className="w-full !mt-7 bg-[#D6EEF6] dark:bg-[#052834] hover:bg-[#97c2d1] text-[#25A8CF] dark:text-[#30CFFF] h-12"
+                      disabled={!depositAmount || !relevantAgent}
+                      onClick={() => {
                         deposit.mutateAsync();
-                      } else {
-                        withdraw.mutateAsync();
-                      }
-                    }}
-                  >
-                    {depositWithdrawTab === "deposit" ? "Deposit" : "Withdraw"}
-                  </Button>
-                </div>
+                      }}
+                    >
+                      Deposit
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

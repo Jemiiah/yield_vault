@@ -268,7 +268,7 @@ export function PoolProvider({ children }: { children: ReactNode }) {
   };
 
   const getStrategyById = (id: string): Strategy | undefined => {
-    return strategies.find((strategy) => strategy.id === id);
+    return strategies.find((strategy: { id: string; }) => strategy.id === id);
   };
 
   // Fetch pools when component mounts
